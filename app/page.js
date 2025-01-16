@@ -1,101 +1,124 @@
-import Image from "next/image";
+import React from "react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import ProjectsFetcher from "../components/ProjectsFetcher";
+import Animate from "../components/Animate"; // Import the Animate component
+import TopLoadingBarWrapper from "../components/TopLoadingBarWrapper"; // Import the TopLoadingBarWrapper
 
-export default function Home() {
+const Home = () => {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="bg-gradient-to-b from-gray-900 to-black text-white min-h-screen">
+      <TopLoadingBarWrapper /> {/* Add this component at the top to display the loading bar */}
+      <Header />
+      <main className="container mx-auto px-8 py-12">
+        {/* Profile Section */}
+        <section className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <img
+              src="https://github.com/NikeGunn/imagess/blob/main/nikhil.png?raw=true" // Replace with your profile image URL
+              alt="Profile Image of Nikhil Bhagat"
+              className="w-40 h-40 rounded-full border-4 border-teal-500 shadow-lg object-cover transition-all duration-500 ease-in-out transform hover:scale-105"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+          </div>
+
+          <Animate animation="fade-up" delay="100">
+            <h1 className="text-6xl font-extrabold gradient-text">
+              Crafting the Future of the Web | Android | AI
+            </h1>
+          </Animate>
+
+          <Animate animation="fade-up" delay="200">
+            <p className="mt-4 text-lg text-gray-300">
+              Empowering businesses and individuals with clean code, innovative solutions, and creative designs to drive digital transformation.
+            </p>
+          </Animate>
+        </section>
+
+        {/* About Me Section */}
+        <section className="text-center mb-12 px-4">
+          <Animate animation="fade-up" delay="400">
+            <h2 className="text-4xl font-extrabold text-teal-400 mb-6">
+              About Me
+            </h2>
+            <p className="text-lg text-gray-300 leading-relaxed mb-6">
+              I am a passionate Full-Stack Developer specializing in creating scalable, secure, and high-performance applications. With expertise in AI, machine learning (ML), deep learning (DL), and generative AI (GenAI) technologies, I tackle complex challenges to deliver cutting-edge solutions that make a meaningful impact on businesses and industries worldwide.
+            </p>
+          </Animate>
+        </section>
+
+        {/* Technical Expertise Section */}
+        <section className="text-center mb-12 px-4">
+          <Animate animation="fade-up" delay="500">
+            <h2 className="text-4xl font-extrabold text-teal-400 mb-6">
+              My Technical Expertise in Full-Stack Development & AI
+            </h2>
+          </Animate>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Animate animation="fade-right">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-500">
+                <h3 className="text-2xl font-semibold mb-4 text-teal-500">Backend Development</h3>
+                <p className="text-gray-300">
+                  Expertise in Django, building robust and scalable APIs that power web and mobile applications. Proficient in using Redis and Kafka for real-time data processing and message queues. Deep knowledge of Docker and Kubernetes for CI/CD pipeline automation, along with Grafana and Prometheus for system monitoring and performance analytics.
+                </p>
+              </div>
+            </Animate>
+
+            <Animate animation="fade-left">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-500">
+                <h3 className="text-2xl font-semibold mb-4 text-teal-500">Frontend Development</h3>
+                <p className="text-gray-300">
+                  Advanced expertise in React.js, Next.js, and React Native, delivering high-performance, SEO-optimized, and user-friendly web and mobile applications. I ensure seamless, responsive, and interactive user experiences with a strong focus on scalability, performance, speed, and cutting-edge innovation.
+                </p>
+              </div>
+            </Animate>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+            <Animate animation="fade-right">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-500">
+                <h3 className="text-2xl font-semibold mb-4 text-teal-500">AI, Machine Learning & MLOps</h3>
+                <p className="text-gray-300">
+                  Skilled in TensorFlow for developing, training, and deploying impactful machine learning and deep learning models. Expertise in MLOps for automating machine learning workflows and model lifecycle management. I also leverage GenAI technologies to build next-generation applications powered by artificial intelligence.
+                </p>
+              </div>
+            </Animate>
+
+            <Animate animation="fade-left">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-500">
+                <h3 className="text-2xl font-semibold mb-4 text-teal-500">What Sets Me Apart.??</h3>
+                <p className="text-gray-300">
+                  Known for delivering creative, scalable solutions and for combining DevOps and MLOps practices to streamline workflows. A lifelong learner, I stay ahead of technological trends to integrate the latest advancements in AI, ML, and GenAI into practical, real-world applications.
+                </p>
+              </div>
+            </Animate>
+          </div>
+        </section>
+
+        {/* Looking For Section */}
+        <section className="text-center mb-12 px-4">
+          <Animate animation="fade-up" delay="600">
+            <h2 className="text-4xl font-extrabold text-teal-400 mb-6">Opportunities I am Excited About</h2>
+          </Animate>
+
+          <Animate animation="fade-up" delay="800">
+            <p className="text-lg text-gray-300 leading-relaxed mb-6">
+              I am looking for opportunities to:
+            </p>
+            <ul className="text-lg text-gray-300 list-disc list-inside">
+              <li>Design and develop scalable backend systems using cutting-edge technologies.</li>
+              <li>Build innovative web and mobile applications that offer a seamless, user-friendly experience.</li>
+              <li>Create and deploy AI-powered solutions that transform industries and drive efficiency.</li>
+            </ul>
+          </Animate>
+        </section>
+
+        {/* Client-side project fetching */}
+        <ProjectsFetcher />
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <Footer />
     </div>
   );
-}
+};
+
+export default Home;

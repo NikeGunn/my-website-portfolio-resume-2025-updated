@@ -1,41 +1,86 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Node.js dependencies
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Next.js build outputs
+.next/
+out/
 
-# testing
-/coverage
+# Local environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# OS specific files
+.DS_Store
+Thumbs.db
 
-# vercel
-.vercel
+# IDEs and editors
+.vscode/
+.idea/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Coverage reports
+coverage/
+
+# Dependency directories
+jspm_packages/
+
+# Docker
+docker-compose.override.yml
+docker-compose.yml
+*.docker
+Dockerfile*
+
+# Next.js cache
+.next/
+.cache/
+
+# Vercel/Netlify/other deployment platforms
+.vercel/
+.netlify/
+
+# Log files generated during build process
+*.log
+
+# NPM package lock
+package-lock.json
+yarn.lock
+
+# TypeScript build outputs
+dist/
+build/
+
+# Private SSH keys
+*.pem
+*.key
+
+# MacOS specific files
+.AppleDouble
+.LSOverride
+
+# Windows Installer files
+Thumbs.db
+
+# Compiled output
+*.out
+*.a
+*.o
+*.i
+*.obj
+*.so
+*.dylib
+*.dll
+
+# Project specific ignore (optional, modify based on your project)
+# Uncomment the lines below if you are using a build system, testing tools, etc.
+# .coverage/
+# .sass-cache/
+# .history/
+# .serverless/
+# .next-tmp/

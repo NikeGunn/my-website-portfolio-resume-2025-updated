@@ -2,20 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Ensure the progress bar styles are not overridden by global styles */
+#nprogress .bar {
+  background: #ffffff !important; /* White color for progress bar */
+  height: 4px !important; /* Ensure correct height */
+  box-shadow: none; /* Disable box shadow */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+#nprogress .spinner {
+  display: none !important; /* Hide the spinner */
+}
+
+#nprogress .peg {
+  box-shadow: none; /* No box shadow for the peg */
+}
+
+
+
+/* Button Glow Effects */
+.btn-primary-glow {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.75);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-primary-glow:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.85);
+}
+
+.btn-secondary-glow {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: transparent;
+  border: 2px solid #3b82f6;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-secondary-glow:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+}
+
+/* Text Glow Animation */
+@keyframes text-glow {
+  0% {
+    text-shadow: 0 0 5px #ff007a, 0 0 10px #ff007a, 0 0 20px #ff007a;
+  }
+  100% {
+    text-shadow: 0 0 10px #ff007a, 0 0 30px #ff007a, 0 0 50px #ff007a;
+  }
+}
+.animate-text-glow {
+  animation: text-glow 2s infinite alternate;
+}
+
+/* Orb Glow Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
