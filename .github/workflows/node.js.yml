@@ -1,4 +1,3 @@
-# Updated GitHub Actions workflow for Next.js static export
 name: Deploy Next.js site to GitHub Pages
 
 on:
@@ -32,6 +31,8 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: Add CNAME file
         run: echo "nikhilbhagat.com.np" > ./out/CNAME
