@@ -1,12 +1,24 @@
 {
   "name": "my-portfolio",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
+  "description": "Nikhil Bhagat's personal portfolio built with Next.js, React, and Tailwind CSS.",
+  "author": "Nikhil Bhagat | programmer@nikhilbhagat.com.np",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NikeGunn/my-website-portfolio-resume-2025-updated"
+  },
+  "bugs": {
+    "url": "https://github.com/NikeGunn/my-website-portfolio-resume-2025-updated/issues"
+  },
+  "homepage": "https://github.com/NikeGunn/my-website-portfolio-resume-2025-updated",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "aos": "^2.3.4",
@@ -14,13 +26,31 @@
     "next-nprogress-bar": "^2.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-top-loading-bar": "^3.0.2"
+    "react-top-loading-bar": "^3.0.2",
+    "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "prettier": "^2.4.1",
+    "postcss": "^8"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "contributors": [
+    {
+      "name": "Nikhil Bhagat",
+      "email": "programmer@nikhilbhagat.com.np",
+      "url": "https://nikhilbhagat.com.np"
+    }
+  ],
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "printWidth": 80
   }
 }
