@@ -2,27 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure the progress bar styles are not overridden by global styles */
+/* Progress bar styles */
 #nprogress .bar {
-  background: #ffffff !important; /* White color for progress bar */
-  height: 4px !important; /* Ensure correct height */
-  box-shadow: none; /* Disable box shadow */
+  background: #ffffff !important;
+  height: 4px !important;
+  box-shadow: none;
 }
 
 #nprogress .spinner {
-  display: none !important; /* Hide the spinner */
+  display: none !important;
 }
 
 #nprogress .peg {
-  box-shadow: none; /* No box shadow for the peg */
+  box-shadow: none;
 }
-
-
 
 /* Button Glow Effects */
 .btn-primary-glow {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 20px;
+  font-size: 14px;
   font-weight: bold;
   color: white;
   background: linear-gradient(90deg, #06b6d4, #3b82f6);
@@ -33,13 +31,13 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .btn-primary-glow:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.85);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.85);
 }
 
 .btn-secondary-glow {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 20px;
+  font-size: 14px;
   font-weight: bold;
   color: white;
   background: transparent;
@@ -49,7 +47,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .btn-secondary-glow:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
 }
 
@@ -78,9 +76,56 @@
   }
 }
 
+/* Responsive container */
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-left: 2rem;
-  padding-right: 2rem;
+  max-width: 100%;
+  padding: 1rem;
+  @media (min-width: 768px) {
+    max-width: 768px;
+  }
+  @media (min-width: 1024px) {
+    max-width: 1024px;
+  }
+  @media (min-width: 1200px) {
+    max-width: 1200px;
+  }
+}
+
+/* Utility classes for mobile responsiveness */
+img {
+  width: 100%;
+  height: auto;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.section-padding {
+  padding: 2rem 1rem;
+  @media (min-width: 1024px) {
+    padding: 4rem 2rem;
+  }
+}
+
+/* Ensure profile image is responsive */
+.profile-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: auto;
+  @media (min-width: 768px) {
+    width: 150px;
+    height: 150px;
+  }
 }
