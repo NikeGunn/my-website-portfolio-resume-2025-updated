@@ -5,18 +5,27 @@ import ProjectCard from "./ProjectCard";
 import { fetchProjects } from "../app/api"; // Import fetchProjects from api.js
 
 const ProjectsFetcher = () => {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState([]); // State to hold the list of projects
+  const [loading, setLoading] = useState(true); // State to handle loading state
 
+  // Fetch and sort projects when the component is mounted
   useEffect(() => {
     const getProjects = async () => {
-      setLoading(true);
-      const projectsData = await fetchProjects(); // Call the function from api.js
-      setProjects(projectsData); // Set the projects data
-      setLoading(false);
+      setLoading(true); // Start loading
+      try {
+        const projectsData = await fetchProjects(); // Fetch projects from the API
+        // Sort the projects by createdAt in descending order (newest first)
+        const sortedProjects = projectsData.sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        setProjects(sortedProjects); // Update the state with sorted projects
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      }
+      setLoading(false); // Stop loading
     };
 
-    getProjects();
+    getProjects(); // Call the async function
   }, []);
 
   return (
