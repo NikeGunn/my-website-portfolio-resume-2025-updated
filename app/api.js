@@ -5,7 +5,7 @@ export const fetchProjects = async () => {
     const json = await response.json();
 
     if (json.success) {
-      return json.data; // Return the 'data' array
+      return json.data.projects; // Return the 'data' array
     } else {
       console.error("API Error:", json.message);
       return [];
