@@ -1,9 +1,10 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, isDraggable }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: project._id, // Unique id for each project
+    id: project._id, // Unique ID for each project
+    disabled: !isDraggable, // Disable dragging if not draggable
   });
 
   // Styles for smooth dragging and responsive z-index
@@ -22,9 +23,11 @@ const ProjectCard = ({ project }) => {
     <div
       ref={setNodeRef}
       style={cardStyle}
-      {...listeners}
+      {...(isDraggable ? listeners : {})} // Apply listeners only if draggable
       {...attributes}
-      className="bg-gray-800 p-6 rounded-lg shadow-md hover:scale-105 transform transition text-center cursor-pointer"
+      className={`bg-gray-800 p-6 rounded-lg shadow-md hover:scale-105 transform transition text-center ${
+        isDraggable ? 'cursor-pointer' : 'cursor-not-allowed'
+      }`}
     >
       <h3 className="text-2xl font-semibold mb-2">{project.name}</h3>
       <p className="text-gray-400 mb-4">{project.description}</p>

@@ -9,6 +9,20 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 const ProjectsFetcher = () => {
   const [projects, setProjects] = useState([]); // State to hold the list of projects
   const [loading, setLoading] = useState(true); // State to handle loading state
+  const [isMobile, setIsMobile] = useState(false); // State to determine if the device is mobile
+
+  // Detect device type (mobile or desktop)
+  useEffect(() => {
+    const detectDevice = () => {
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      setIsMobile(isMobileDevice); // Set the state based on the device
+    };
+
+    detectDevice();
+    window.addEventListener('resize', detectDevice); // Re-detect on window resize
+
+    return () => window.removeEventListener('resize', detectDevice); // Cleanup listener
+  }, []);
 
   // Fetch and sort projects when the component is mounted
   useEffect(() => {
@@ -26,10 +40,20 @@ const ProjectsFetcher = () => {
     };
 
     getProjects(); // Call the async function
-  }, []); // Empty dependency array ensures it runs once on component mount
+  }, []);
 
-  // Create sensors for drag-and-drop interaction
-  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
+  // Create sensors with consistent structure
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: { distance: 10 },
+    disabled: isMobile, // Disable MouseSensor on mobile devices
+  });
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { distance: 10 },
+    disabled: !isMobile, // Disable TouchSensor on desktop devices
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   return (
     <section className="mt-12">
@@ -46,7 +70,7 @@ const ProjectsFetcher = () => {
           <SortableContext items={projects.map((project) => project._id)} strategy={verticalListSortingStrategy}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => (
-                <ProjectCard key={project._id} project={project} />
+                <ProjectCard key={project._id} project={project} isDraggable={!isMobile} />
               ))}
             </div>
           </SortableContext>
