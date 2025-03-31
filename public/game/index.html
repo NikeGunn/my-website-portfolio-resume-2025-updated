@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring Manager Catching Nikhil - 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #0af;
+            font-size: 18px;
+            text-shadow: 0 0 10px #0af;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f0a;
+            font-size: 48px;
+            text-align: center;
+            text-shadow: 0 0 20px #f0a;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 100;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #0af;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0af;
+            z-index: 100;
+        }
+
+        #restart {
+            position: absolute;
+            top: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(0, 170, 255, 0.2);
+            color: #0af;
+            border: 1px solid #0af;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 15px #0af;
+        }
+
+        #restart:hover {
+            background: rgba(0, 170, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <div id="ui">
+        <div id="score">Caught Nikhil: 0 times</div>
+        <div id="distance">Distance to Nikhil: 100m</div>
+    </div>
+    <div id="message"></div>
+    <button id="restart">Play Again</button>
+    <div id="controls">Move: WASD or Arrow Keys</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Game variables
+        let score = 0;
+        let gameActive = true;
+        let catchDistance = 3;
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000);
+        document.getElementById('game-container').appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x333333);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0x00aaff, 1, 100);
+        pointLight.position.set(0, 0, 0);
+        scene.add(pointLight);
+
+        const pointLight2 = new THREE.PointLight(0xff00aa, 1, 100);
+        pointLight2.position.set(20, 20, 20);
+        scene.add(pointLight2);
+
+        // Stars background
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const starsVertices = [];
+        for (let i = 0; i < 10000; i++) {
+            starsVertices.push(
+                (Math.random() - 0.5) * 2000,
+                (Math.random() - 0.5) * 2000,
+                (Math.random() - 0.5) * 2000
+            );
+        }
+
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+
+        // Hiring Manager (player spaceship)
+        const managerGeometry = new THREE.ConeGeometry(1, 2, 16);
+        const managerMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00aaff,
+            emissive: 0x0066aa,
+            emissiveIntensity: 0.5,
+            specular: 0x0099ff,
+            shininess: 50
+        });
+        const manager = new THREE.Mesh(managerGeometry, managerMaterial);
+        manager.rotation.x = Math.PI / 2;
+        scene.add(manager);
+
+        // Engine glow
+        const engineGlowGeometry = new THREE.ConeGeometry(0.8, 2, 16);
+        const engineGlowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.7
+        });
+        const engineGlow = new THREE.Mesh(engineGlowGeometry, engineGlowMaterial);
+        engineGlow.rotation.x = Math.PI / 2;
+        engineGlow.position.z = -1;
+        manager.add(engineGlow);
+
+        // Nikhil character
+        const nikhilGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const nikhilMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff00aa,
+            emissive: 0xff0066,
+            emissiveIntensity: 0.3,
+            specular: 0xff00cc,
+            shininess: 30
+        });
+        const nikhil = new THREE.Mesh(nikhilGeometry, nikhilMaterial);
+        nikhil.position.set(10, 0, 0);
+        scene.add(nikhil);
+
+        // Nikhil's hat (to make him recognizable)
+        const hatGeometry = new THREE.CylinderGeometry(1.2, 1.5, 0.5, 32);
+        const hatMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+        hat.position.y = 1.2;
+        nikhil.add(hat);
+
+        // Camera positioning (third person view)
+        camera.position.set(0, 5, -10);
+        camera.lookAt(manager.position);
+
+        // Movement variables
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        const moveSpeed = 0.2;
+        const rotationSpeed = 0.05;
+
+        // Key states
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+
+        // Event listeners for keyboard
+        document.addEventListener('keydown', (event) => {
+            if (keys.hasOwnProperty(event.key)) {
+                keys[event.key] = true;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (keys.hasOwnProperty(event.key)) {
+                keys[event.key] = false;
+            }
+        });
+
+        // Nikhil AI movement
+        let nikhilTarget = new THREE.Vector3(
+            Math.random() * 30 - 15,
+            Math.random() * 10 - 5,
+            Math.random() * 30 - 15
+        );
+        let nikhilSpeed = 0.05;
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Restart game button
+        document.getElementById('restart').addEventListener('click', () => {
+            gameActive = true;
+            document.getElementById('message').style.opacity = 0;
+            document.getElementById('restart').style.display = 'none';
+
+            // Reset positions
+            manager.position.set(0, 0, 0);
+            nikhil.position.set(10, 0, 0);
+            velocity.set(0, 0, 0);
+
+            // Generate new target for Nikhil
+            nikhilTarget = new THREE.Vector3(
+                Math.random() * 30 - 15,
+                Math.random() * 10 - 5,
+                Math.random() * 30 - 15
+            );
+        });
+
+        function showMessage(text) {
+            document.getElementById('message').textContent = text;
+            document.getElementById('message').style.opacity = 1;
+            setTimeout(() => {
+                document.getElementById('message').style.opacity = 0;
+            }, 2000);
+        }
+
+        function catchNikhil() {
+            gameActive = false;
+            score++;
+            document.getElementById('score').textContent = `Caught Nikhil: ${score} times`;
+            showMessage("You Hired Nikhil!");
+            document.getElementById('restart').style.display = 'block';
+        }
+
+        // Game loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update player movement
+            direction.z = Number(keys.ArrowUp || keys.w) - Number(keys.ArrowDown || keys.s);
+            direction.x = Number(keys.ArrowRight || keys.d) - Number(keys.ArrowLeft || keys.a);
+            direction.normalize();
+
+            if (gameActive) {
+                // Move manager
+                if (direction.z !== 0 || direction.x !== 0) {
+                    velocity.z -= direction.z * moveSpeed;
+                    velocity.x -= direction.x * moveSpeed;
+                }
+
+                // Apply damping
+                velocity.z *= 0.95;
+                velocity.x *= 0.95;
+
+                // Rotate manager
+                if (velocity.z !== 0 || velocity.x !== 0) {
+                    const targetRotation = Math.atan2(velocity.x, -velocity.z);
+                    manager.rotation.y = THREE.MathUtils.lerp(manager.rotation.y, targetRotation, rotationSpeed);
+                }
+
+                // Move manager
+                manager.position.z += velocity.z;
+                manager.position.x += velocity.x;
+
+                // Camera follow
+                const cameraOffset = new THREE.Vector3(0, 5, -10);
+                cameraOffset.applyQuaternion(manager.quaternion);
+                camera.position.copy(manager.position.clone().add(cameraOffset));
+                camera.lookAt(manager.position);
+
+                // Animate engine glow
+                engineGlow.scale.z = 1 + Math.sin(Date.now() * 0.02) * 0.3;
+
+                // Nikhil AI movement
+                if (nikhil.position.distanceTo(nikhilTarget) < 2) {
+                    nikhilTarget = new THREE.Vector3(
+                        Math.random() * 30 - 15,
+                        Math.random() * 10 - 5,
+                        Math.random() * 30 - 15
+                    );
+                    nikhilSpeed = 0.02 + Math.random() * 0.03;
+                }
+
+                const moveDirection = nikhilTarget.clone().sub(nikhil.position).normalize();
+                nikhil.position.add(moveDirection.multiplyScalar(nikhilSpeed));
+
+                // Nikhil float animation
+                nikhil.position.y += Math.sin(Date.now() * 0.002) * 0.02;
+
+                // Check catch condition
+                if (manager.position.distanceTo(nikhil.position) < catchDistance) {
+                    catchNikhil();
+                }
+
+                // Update UI distance
+                const dist = manager.position.distanceTo(nikhil.position).toFixed(1);
+                document.getElementById('distance').textContent = `Distance to Nikhil: ${dist}m`;
+            }
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
