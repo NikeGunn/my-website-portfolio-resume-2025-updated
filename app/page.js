@@ -50,7 +50,7 @@ const Home = () => {
           <Animate animation={fadeUp} delay="400">
             <h2 className="text-4xl font-extrabold text-teal-400 mb-6">About Me</h2>
             <p className="text-lg text-gray-300 leading-relaxed mb-6">
-              I am a passionate Full-Stack Developer specializing in creating scalable, secure, and high-performance applications...
+            I am a passionate Full-Stack Developer specializing in creating scalable, secure, and high-performance applications. With expertise in AI, machine learning (ML), deep learning (DL), and generative AI (GenAI) technologies, I tackle complex challenges to deliver cutting-edge solutions that make a meaningful impact on businesses and industries worldwide.
             </p>
           </Animate>
         </section>
