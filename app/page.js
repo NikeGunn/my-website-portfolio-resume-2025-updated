@@ -51,9 +51,9 @@ const Home = () => {
           </Animate>
         </section>
 
-     {/* Resume Section */}
+      {/* Resume Section */}
       <section className="text-center my-12 px-4">
-        <Animate animation="fade-up" delay="600">
+        <Animate animation="fade-up" delay="100">
           <h2 className="text-4xl font-extrabold text-teal-400 mb-6">Resume</h2>
           <div className="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6 border border-teal-500/20">
             <div className="text-center">
@@ -63,7 +63,7 @@ const Home = () => {
                 Full-Stack Developer with expertise in Next.js, React, Android, and AI-driven solutions. Delivering scalable, innovative applications for modern businesses.
               </p>
               <a
-                href="/nikhil-resume.pdf" // Ensure this matches your file in public/nikhil-resume.pdf
+                href="/nikhil-resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-teal-400 underline hover:text-teal-300 transition-all duration-300"
@@ -72,14 +72,18 @@ const Home = () => {
               </a>
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Preview</h4>
-                <iframe
-                  src="/nikhil-resume.pdf" // Matches your file in public/nikhil-resume.pdf
-                  width="100%"
-                  height="300"
-                  className="rounded-lg border border-gray-700"
-                  title="Nikhil Bhagat Resume Preview"
-                  loading="lazy"
-                />
+                <a
+                  href="/nikhil-resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="/nikhil-resume-preview.png"
+                    alt="Nikhil Bhagat Resume Preview"
+                    className="w-full max-w-md mx-auto rounded-lg border border-gray-700 shadow-md hover:opacity-90 transition-all duration-300"
+                    loading="lazy"
+                  />
+                </a>
               </div>
             </div>
           </div>
