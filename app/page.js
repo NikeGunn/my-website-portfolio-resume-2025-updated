@@ -5,6 +5,7 @@ import Animate from "../components/Animate";
 const Header = lazy(() => import("../components/Header"));
 const Footer = lazy(() => import("../components/Footer"));
 const ProjectsFetcher = lazy(() => import("../components/ProjectsFetcher"));
+const ChatComponent = lazy(() => import("../components/chat/ChatComponent"));
 
 const ProfileImage = memo(() => (
   <div className="flex justify-center mb-6">
@@ -111,6 +112,32 @@ const Home = () => {
               loading="lazy"
             ></iframe>
           </div>
+        </section>
+
+        {/* Chat Section */}
+        <section className="my-16">
+          <Animate animation="fade-up" delay="100">
+            <h2 className="text-5xl font-extrabold mb-8 bg-gradient-to-r from-[#30C2CB] to-teal-400 bg-clip-text text-transparent text-center">
+              Chat With Me<span className="text-white">💬</span>
+            </h2>
+            <div className="max-w-3xl mx-auto text-center mb-8">
+              <p className="text-lg text-gray-300 leading-relaxed">
+                Have questions about my projects, skills, or experience? My AI assistant is ready to help you learn more about me and my work. Feel free to start a conversation!
+              </p>
+            </div>
+            <div className="flex justify-start w-full max-w-4xl mx-auto px-4 md:px-0">
+              <Suspense fallback={
+                <div className="h-96 flex items-center justify-center w-full">
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 border-4 border-[#30C2CB] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 text-[#30C2CB]">Loading chat interface...</p>
+                  </div>
+                </div>
+              }>
+                <ChatComponent />
+              </Suspense>
+            </div>
+          </Animate>
         </section>
       </main>
 
