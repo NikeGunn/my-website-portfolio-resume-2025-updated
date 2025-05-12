@@ -9,28 +9,33 @@ const ChatComponent = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentBotText, setCurrentBotText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(true);
+  const [initialRender, setInitialRender] = useState(true);
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const textareaRef = useRef(null);
   const chatMessagesRef = useRef(null);
-  const shouldScrollRef = useRef(true);
+  const shouldScrollRef = useRef(false); // Changed to false by default
 
   // API endpoint
   const API_URL = 'https://personal-ai-model-built-in-scikit-learn.onrender.com/chat/';
 
   useEffect(() => {
-    // Add initial greeting on first load
+    // Add initial greeting on first load, but don't auto-scroll
     if (messages.length === 0) {
       const greeting = "Hello! I'm Nikhil Bhagat's AI assistant. How can I help you today?";
       setTimeout(() => {
-        addBotMessage(greeting);
+        // Add greeting without forcing scroll
+        setCurrentBotText(greeting);
+        setIsTypingComplete(false);
+        setMessages([{ text: '', isUser: false, isTyping: true }]);
       }, 800);
     }
 
-    // Focus the input when component loads
-    setTimeout(() => {
-      chatInputRef.current?.focus();
-    }, 1000);
+    // Don't auto-focus the chat input on page load
+    // This prevents the browser from scrolling to the chat
+
+    // Mark initial render complete after component mounts
+    setInitialRender(false);
   }, []);
 
   useEffect(() => {
@@ -42,12 +47,17 @@ const ChatComponent = () => {
   }, [inputValue]);
 
   useEffect(() => {
-    // Only scroll to bottom if we're close to the bottom already
-    // or if a new user message was added
-    if (shouldScrollRef.current) {
-      scrollToBottom();
+    // Only scroll within the chat container, not the page
+    // And only when user has interacted with the chat
+    if (shouldScrollRef.current && messagesEndRef.current && chatMessagesRef.current) {
+      // Use scrollIntoView with options that prevent page scrolling
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
     }
-  }, [messages]);
+  }, [messages, initialRender]);
 
   // Check if user has scrolled up and is reading previous messages
   const handleScroll = () => {
@@ -60,8 +70,20 @@ const ChatComponent = () => {
     shouldScrollRef.current = isCloseToBottom;
   };
 
+  // Only enable auto-scrolling when user interacts with the chat
+  const handleChatInteraction = () => {
+    shouldScrollRef.current = true;
+  };
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && chatMessagesRef.current) {
+      // Use scrollIntoView with options that prevent page scrolling
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
   };
 
   const addUserMessage = (message) => {
@@ -107,6 +129,9 @@ const ChatComponent = () => {
   };
 
   const handleSend = async () => {
+    // Enable auto-scrolling when sending a message
+    handleChatInteraction();
+
     const message = inputValue.trim();
 
     if (message) {
@@ -151,11 +176,18 @@ const ChatComponent = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    } else {
+      // Enable auto-scrolling when typing
+      handleChatInteraction();
     }
   };
 
   return (
-    <div className="embedded-chat-container">
+    <div
+      className="embedded-chat-container"
+      // Enable auto-scrolling on click anywhere in the chat
+      onClick={handleChatInteraction}
+    >
       <div className="chat-header">
         <div className="avatar">
           <img

@@ -97,10 +97,11 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
     return () => clearInterval(blinkInterval);
   }, [isComplete]);
 
-  // Scroll to the bottom as typing happens
+  // Scroll only within the container as typing happens, not the entire page
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      // This scroll is now confined to the container only
+      containerRef.current.scrollLeft = containerRef.current.scrollWidth;
     }
   }, [displayedText]);
 
@@ -111,7 +112,10 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
       style={{
         fontFamily: 'monospace',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        // Ensure scrolling only happens within this container
+        maxWidth: '100%',
+        display: 'inline-block'
       }}
     >
       <span className="hacker-text">{displayedText}</span>
