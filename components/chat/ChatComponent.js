@@ -191,7 +191,7 @@ const ChatComponent = () => {
       <div className="chat-header">
         <div className="avatar">
           <img
-            src="https://github.com/NikeGunn/imagess/blob/main/nikhil.png?raw=true"
+            src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
             alt="Nikhil Bhagat"
             className="w-full h-full object-cover rounded-full"
           />
@@ -216,7 +216,7 @@ const ChatComponent = () => {
             <div key={index} className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
               {!message.isUser && <div className="bot-icon">
                 <img
-                  src="https://github.com/NikeGunn/imagess/blob/main/nikhil.png?raw=true"
+                  src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
                   alt="Nikhil Bhagat"
                   className="w-full h-full object-cover rounded-full"
                 />
