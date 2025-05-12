@@ -118,7 +118,7 @@ const Home = () => {
         <section className="my-16">
           <Animate animation="fade-up" delay="100">
             <h2 className="text-5xl font-extrabold mb-8 bg-gradient-to-r from-[#30C2CB] to-teal-400 bg-clip-text text-transparent text-center">
-              Chat With Me<span className="text-white">💬</span>
+              Chat With My First AI Model Hauba<span className="text-white">💬</span>
             </h2>
             <div className="max-w-3xl mx-auto text-center mb-8">
               <p className="text-lg text-gray-300 leading-relaxed">

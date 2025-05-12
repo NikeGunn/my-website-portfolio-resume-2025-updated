@@ -22,7 +22,7 @@ const ChatComponent = () => {
   useEffect(() => {
     // Add initial greeting on first load, but don't auto-scroll
     if (messages.length === 0) {
-      const greeting = "Hello! I'm Nikhil Bhagat's AI assistant. How can I help you today?";
+      const greeting = "Hello! I'm Hauba Nikhil Bhagat's AI assistant. How can I help you today?";
       setTimeout(() => {
         // Add greeting without forcing scroll
         setCurrentBotText(greeting);
@@ -197,7 +197,7 @@ const ChatComponent = () => {
           />
         </div>
         <div className="header-info">
-          <div className="header-title">Chat with Nikhil Bhagat</div>
+          <div className="header-title">Chat with Hauba</div>
           <div className="header-status">
             <div className="status-indicator"></div>
             Online
