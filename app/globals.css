@@ -306,13 +306,38 @@ img {
 .user-message .message-content {
   background-color: #30C2CB;
   border-bottom-right-radius: 4px;
-  text-align: right;
+  text-align: left;
+  /* For general text */
   color: #ffffff;
   /* Ensuring white text for user messages */
   font-weight: 500;
   /* Slightly bolder for better visibility */
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
   /* Subtle text shadow for contrast */
+}
+
+/* Adjust code block alignment in user messages */
+.user-message .markdown-content {
+  width: 100%;
+  text-align: left;
+  /* Override the right alignment for code blocks */
+}
+
+.user-message .markdown-content pre {
+  text-align: left;
+  direction: ltr;
+  width: 100%;
+}
+
+.user-message .code-block-container {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+/* Only right-align the regular text in user messages, not code blocks */
+.user-message .markdown-paragraph {
+  text-align: right;
 }
 
 .bot-message .message-content {
@@ -796,6 +821,8 @@ img {
   background: transparent !important;
   padding: 0 !important;
   color: #e2f8ff !important;
+  text-align: left !important;
+  direction: ltr !important;
 }
 
 /* Code block styling - ChatGPT style */
@@ -851,6 +878,8 @@ img {
   /* Ensure button is above other elements */
   position: relative;
   /* Ensure z-index works */
+  top: 0;
+  right: 0;
 }
 
 .copy-button:hover {
@@ -877,6 +906,9 @@ img {
   font-family: 'Geist Mono', 'Courier New', Courier, monospace;
   font-size: 14px;
   line-height: 1.5;
+  padding: 12px !important;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 /* Language-specific color accents for code blocks */

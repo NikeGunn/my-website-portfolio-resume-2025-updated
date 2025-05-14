@@ -112,11 +112,112 @@ const ChatComponent = () => {
     }
   };
 
+  // Function to detect and format code in text
+  const formatCodeInUserMessage = (text) => {
+    // Split the message into lines to check for patterns
+    const lines = text.split('\n');
+
+    // Check if the message follows the pattern: "text" + newline + "code"
+    // For example: "solve this issue" + newline + "function example() {...}"
+    if (lines.length > 1) {
+      // Check if there's a code block after the first line
+      const potentialCode = lines.slice(1).join('\n').trim();
+
+      if (potentialCode && potentialCode.length > 0) {
+        // Check if the second part looks like code
+        const looksLikeCode =
+          // JavaScript/React/TypeScript patterns
+          (potentialCode.includes('function') || potentialCode.includes('=>')) ||
+          potentialCode.includes('const ') || potentialCode.includes('let ') ||
+          potentialCode.includes('var ') || potentialCode.includes('import ') ||
+          potentialCode.includes('export ') || potentialCode.includes('class ') ||
+          // HTML/JSX patterns
+          (potentialCode.includes('<') && potentialCode.includes('>')) ||
+          // Brackets and parentheses
+          (potentialCode.includes('{') && potentialCode.match(/[{}]/g)?.length >= 2) ||
+          (potentialCode.includes('(') && potentialCode.includes(')')) ||
+          // Common code keywordsi hafv
+          potentialCode.includes('return ') ||
+          potentialCode.includes('for(') || potentialCode.includes('while(') ||
+          // Hook and component patterns
+          potentialCode.includes('useState') || potentialCode.includes('useEffect') ||
+          // Multiple lines with indentation or common code patterns
+          (potentialCode.split('\n').length > 1 &&
+            (/^\s+/m.test(potentialCode) || /[;{}()[\]]/.test(potentialCode)));
+
+        if (looksLikeCode) {
+          // Try to detect the language
+          let language = 'javascript'; // Default to JavaScript for React code
+
+          if (potentialCode.includes('def ') || potentialCode.includes('import ') &&
+              potentialCode.includes(':') && !potentialCode.includes(';')) {
+            language = 'python';
+          } else if ((potentialCode.includes('<div') || potentialCode.includes('<span') ||
+                    potentialCode.includes('</') || potentialCode.includes('<html')) &&
+                    !potentialCode.includes('import React') && !potentialCode.includes('useState')) {
+            language = 'html';
+          } else if (potentialCode.includes('.class') || potentialCode.includes('#id') ||
+                    potentialCode.includes('@media') || (potentialCode.includes('{') &&
+                    potentialCode.includes('}') && potentialCode.includes(':') &&
+                    !potentialCode.includes('function'))) {
+            language = 'css';
+          }
+
+          // Return the first line as is, plus formatted code
+          return lines[0] + '\n\n```' + language + '\n' + potentialCode + '\n```';
+        }
+      }
+    }
+
+    // If message doesn't match our "text + code" pattern, check if it's entirely code
+    if (text.includes('```')) {
+      return text; // Already formatted, no need to change
+    }
+
+    // Check if the entire text looks like code
+    const looksLikeCode =
+      (text.includes('function') && text.includes('{') && text.includes('}')) ||
+      (text.includes('class') && text.includes('extends') && text.includes('{')) ||
+      (text.includes('import') && text.includes('from') && text.includes(';')) ||
+      (text.includes('const') && text.includes('=') && text.includes('=>')) ||
+      (text.includes('<') && text.includes('>') && text.includes('</')) ||
+      (text.split('\n').length > 2 && text.includes('{') && text.includes('}') &&
+       (text.includes('function') || text.includes('const') || text.includes('class')));
+
+    if (looksLikeCode) {
+      // Try to detect the language
+      let language = 'javascript'; // Default to JavaScript for React code
+
+      if (text.includes('def ') || text.includes('import ') &&
+          text.includes(':') && !text.includes(';')) {
+        language = 'python';
+      } else if ((text.includes('<div') || text.includes('<span') ||
+                text.includes('</') || text.includes('<html')) &&
+                !text.includes('import React') && !text.includes('useState')) {
+        language = 'html';
+      } else if (text.includes('.class') || text.includes('#id') ||
+                text.includes('@media') || (text.includes('{') &&
+                text.includes('}') && text.includes(':') &&
+                !text.includes('function'))) {
+        language = 'css';
+      }
+
+      // Format the entire message as code
+      return '```' + language + '\n' + text + '\n```';
+    }
+
+    return text; // Return original text if not code
+  };
+
   const addUserMessage = (message) => {
     shouldScrollRef.current = true; // Always scroll for user messages
+
+    // Format code in user message if present
+    const formattedMessage = formatCodeInUserMessage(message);
+
     setMessages(prevMessages => [
       ...prevMessages,
-      { text: message, isUser: true }
+      { text: formattedMessage, isUser: true }
     ]);
   };
 
@@ -348,7 +449,32 @@ const ChatComponent = () => {
               </div>}
               <div className="message-content">
                 {message.isUser ? (
-                  message.text
+                  <div className="markdown-content">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
+                      rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                      components={{
+                        pre: ({ node, ...props }) => (
+                          <div style={{ position: 'relative' }} {...props} />
+                        ),
+                        code: CodeBlock,
+                        ul: ({ node, ...props }) => (
+                          <ul className="markdown-list" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="markdown-list" {...props} />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li className="markdown-list-item" {...props} />
+                        ),
+                        p: ({ node, ...props }) => (
+                          <p className="markdown-paragraph" {...props} />
+                        )
+                      }}
+                    >
+                      {message.text}
+                    </ReactMarkdown>
+                  </div>
                 ) : message.isTyping ? (
                   // Only apply the typing effect to the latest bot message
                   index === messages.length - 1 && !isTypingComplete ? (
