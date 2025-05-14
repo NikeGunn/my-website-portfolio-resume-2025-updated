@@ -155,6 +155,34 @@ img {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
 }
 
+/* Reset button styling */
+.reset-button {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+  margin-right: 8px;
+}
+
+.reset-button:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: rotate(180deg);
+}
+
+.reset-button svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+}
+
 /* Embedded Chat Container */
 .embedded-chat-container {
   display: flex;
@@ -562,4 +590,353 @@ img {
 /* Occasional glitch effect on hacker text */
 .bot-message:hover .hacker-text-style {
   animation: glitch 0.3s infinite;
+}
+
+/* Markdown specific styles for chat messages */
+.markdown-content {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Code blocks in markdown */
+.markdown-content pre {
+  background-color: #1a1e2b !important;
+  border-radius: 8px;
+  padding: 0;
+  margin: 12px 0;
+  font-family: 'Geist Mono', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(48, 194, 203, 0.3);
+}
+
+.markdown-content .code-block {
+  margin: 0;
+  padding: 12px 16px;
+  overflow-x: auto;
+  background-color: #1a1e2b;
+}
+
+.markdown-content .code-block-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.markdown-content .code-language {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: rgba(48, 194, 203, 0.2);
+  color: #30C2CB;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-bottom-left-radius: 6px;
+  font-family: 'Geist Mono', monospace;
+  z-index: 2;
+  font-weight: 500;
+  border-left: 1px solid rgba(48, 194, 203, 0.3);
+  border-bottom: 1px solid rgba(48, 194, 203, 0.3);
+}
+
+.markdown-content .inline-code {
+  font-family: 'Geist Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  padding: 2px 5px;
+  background-color: rgba(30, 41, 59, 0.8);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+/* Lists in markdown */
+.markdown-content .markdown-list {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.markdown-content .markdown-list-item {
+  margin-bottom: 6px;
+  position: relative;
+  padding-left: 4px;
+}
+
+.markdown-content ol.markdown-list {
+  counter-reset: item;
+}
+
+.markdown-content ul.markdown-list li::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 9px;
+  width: 6px;
+  height: 6px;
+  background-color: #30C2CB;
+  border-radius: 50%;
+}
+
+/* Paragraphs in markdown */
+.markdown-content .markdown-paragraph {
+  margin: 12px 0;
+  line-height: 1.6;
+}
+
+.markdown-content .markdown-paragraph:first-child {
+  margin-top: 0;
+}
+
+.markdown-content .markdown-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Tables in markdown */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(48, 194, 203, 0.3);
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: rgba(48, 194, 203, 0.1);
+  font-weight: bold;
+  color: #e2f8ff;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+/* Blockquotes in markdown */
+.markdown-content blockquote {
+  border-left: 3px solid #30C2CB;
+  background-color: rgba(48, 194, 203, 0.05);
+  padding: 10px 16px;
+  margin: 12px 0;
+  font-style: italic;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Headings in markdown */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 20px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #e2f8ff;
+  line-height: 1.3;
+}
+
+.markdown-content h1 {
+  font-size: 24px;
+  border-bottom: 1px solid rgba(48, 194, 203, 0.3);
+  padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+  font-size: 20px;
+  border-bottom: 1px solid rgba(48, 194, 203, 0.2);
+  padding-bottom: 6px;
+}
+
+.markdown-content h3 {
+  font-size: 18px;
+}
+
+.markdown-content h4 {
+  font-size: 16px;
+}
+
+/* Horizontal rules */
+.markdown-content hr {
+  border: 0;
+  height: 1px;
+  background: rgba(48, 194, 203, 0.3);
+  margin: 20px 0;
+}
+
+/* Images in markdown */
+.markdown-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+/* Links in markdown */
+.markdown-content a {
+  color: #30C2CB;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+
+.markdown-content a:hover {
+  color: #56d6df;
+  text-decoration: underline;
+}
+
+/* Syntax highlighting for code blocks */
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+  color: #e2f8ff !important;
+}
+
+/* Code block styling - ChatGPT style */
+.code-block-container {
+  position: relative;
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #1a1e2b;
+  border: 1px solid rgba(48, 194, 203, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: rgba(30, 41, 59, 0.7);
+  border-bottom: 1px solid rgba(48, 194, 203, 0.3);
+}
+
+.code-language {
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #30C2CB;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0;
+
+  /* Hide empty language labels */
+  &:empty {
+    display: none;
+  }
+}
+
+.copy-button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure the button stays on the right */
+  margin-left: auto;
+}
+
+.markdown-content .code-block {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  background-color: #1a1e2b;
+  font-family: 'Geist Mono', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Language-specific color accents for code blocks */
+.code-block-container[data-language="javascript"] .code-language,
+.code-block-container[data-language="js"] .code-language {
+  color: #f7df1e;
+  /* JavaScript yellow */
+}
+
+.code-block-container[data-language="python"] .code-language,
+.code-block-container[data-language="py"] .code-language {
+  color: #3776ab;
+  /* Python blue */
+}
+
+.code-block-container[data-language="bash"] .code-language,
+.code-block-container[data-language="sh"] .code-language {
+  color: #4eaa25;
+  /* Bash green */
+}
+
+.code-block-container[data-language="typescript"] .code-language,
+.code-block-container[data-language="ts"] .code-language {
+  color: #3178c6;
+  /* TypeScript blue */
+}
+
+.code-block-container[data-language="json"] .code-language {
+  color: #f69b4;
+  /* JSON orange */
+}
+
+.code-block-container[data-language="html"] .code-language {
+  color: #e34c26;
+  /* HTML orange */
+}
+
+.code-block-container[data-language="css"] .code-language {
+  color: #264de4;
+  /* CSS blue */
+}
+
+/* Markdown typing effect styles */
+.markdown-typing-container {
+  position: relative;
+  width: 100%;
+}
+
+.markdown-typing-container .typewriter-dot {
+  display: inline-block;
+  width: 10px;
+  height: 20px;
+  background-color: #30C2CB;
+  vertical-align: middle;
+  animation: typingDot 0.8s infinite;
+  margin-left: 2px;
+  border-radius: 1px;
+  position: relative;
+  top: -2px;
+}
+
+/* Fix code block styling during typing animation */
+.markdown-typing-container pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Ensure proper styling for nested elements during typing */
+.markdown-typing-container ul,
+.markdown-typing-container ol {
+  margin-left: 24px;
+}
+
+.markdown-typing-container .code-block-container {
+  margin: 12px 0;
+}
+
+/* Ensure inline code is properly styled during typing */
+.markdown-typing-container .inline-code {
+  background-color: rgba(30, 41, 59, 0.8);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: 'Geist Mono', monospace;
 }

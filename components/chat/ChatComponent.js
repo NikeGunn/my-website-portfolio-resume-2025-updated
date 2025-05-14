@@ -2,6 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import HackerTypingEffect from '../HackerTypingEffect';
+import MarkdownTypingEffect from './MarkdownTypingEffect';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
+import remarkBreaks from 'remark-breaks';
+import CopyButton from './CopyButton';
+import 'highlight.js/styles/github-dark.css';
+import 'highlight.js/styles/atom-one-dark.css'; // A better style for code
 
 const ChatComponent = () => {
   const [messages, setMessages] = useState([]);
@@ -10,14 +19,24 @@ const ChatComponent = () => {
   const [currentBotText, setCurrentBotText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
+  const [sessionId, setSessionId] = useState(null); // Add state for session ID
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const textareaRef = useRef(null);
   const chatMessagesRef = useRef(null);
   const shouldScrollRef = useRef(false); // Changed to false by default
 
-  // API endpoint
-  const API_URL = 'https://personal-ai-model-built-in-scikit-learn.onrender.com/chat/';
+  // API endpoint from environment variable - fallback is just a placeholder
+  // The actual URL will only be set in the .env file, not in the code
+  const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || '/api/chat';
+
+  // Load session ID from localStorage on component mount
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem('chat_session_id');
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+    }
+  }, []);
 
   useEffect(() => {
     // Add initial greeting on first load, but don't auto-scroll
@@ -37,6 +56,13 @@ const ChatComponent = () => {
     // Mark initial render complete after component mounts
     setInitialRender(false);
   }, []);
+
+  // Save session ID to localStorage whenever it changes
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('chat_session_id', sessionId);
+    }
+  }, [sessionId]);
 
   useEffect(() => {
     // Auto-resize textarea based on content
@@ -140,12 +166,22 @@ const ChatComponent = () => {
       setIsTyping(true);
 
       try {
+        // Create request body with question and session ID if available
+        const requestBody = {
+          question: message
+        };
+
+        // Add session ID to request if we have one
+        if (sessionId) {
+          requestBody.session_id = sessionId;
+        }
+
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ question: message })
+          body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -153,6 +189,11 @@ const ChatComponent = () => {
         }
 
         const data = await response.json();
+
+        // Store the session ID from the response
+        if (data.session_id) {
+          setSessionId(data.session_id);
+        }
 
         // Short delay to make the typing indicator visible
         setTimeout(() => {
@@ -182,6 +223,33 @@ const ChatComponent = () => {
     }
   };
 
+  const CodeBlock = ({ node, inline, className, children, ...props }) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match && match[1] ? match[1] : '';
+    const codeContent = String(children).replace(/\n$/, '');
+
+    return !inline ? (
+      <div className="code-block-container" data-language={language}>
+        <div className="code-block-header">
+          <span className="code-language">{language}</span>
+          <CopyButton textToCopy={codeContent} />
+        </div>
+        <pre className="code-block">
+          <code
+            className={className}
+            {...props}
+          >
+            {children}
+          </code>
+        </pre>
+      </div>
+    ) : (
+      <code className="inline-code" {...props}>
+        {children}
+      </code>
+    );
+  };
+
   return (
     <div
       className="embedded-chat-container"
@@ -200,9 +268,31 @@ const ChatComponent = () => {
           <div className="header-title">Chat with Hauba</div>
           <div className="header-status">
             <div className="status-indicator"></div>
-            Online
+            {sessionId ? 'Active Conversation' : 'Online'}
           </div>
         </div>
+        {sessionId && (
+          <button
+            onClick={() => {
+              setSessionId(null);
+              localStorage.removeItem('chat_session_id');
+              setMessages([]);
+              setTimeout(() => {
+                const greeting = "Hello! I'm Hauba Nikhil Bhagat's AI assistant. How can I help you today?";
+                setCurrentBotText(greeting);
+                setIsTypingComplete(false);
+                setMessages([{ text: '', isUser: false, isTyping: true }]);
+              }, 300);
+            }}
+            className="reset-button"
+            title="Reset conversation"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       <div
@@ -227,17 +317,62 @@ const ChatComponent = () => {
                 ) : message.isTyping ? (
                   // Only apply the typing effect to the latest bot message
                   index === messages.length - 1 && !isTypingComplete ? (
-                    <HackerTypingEffect
-                      text={currentBotText}
-                      speed={2.5}
-                      onComplete={handleTypingComplete}
-                      className="hacker-text-style"
-                    />
+                    <div className="markdown-content">
+                      <MarkdownTypingEffect
+                        text={currentBotText}
+                        speed={2.5}
+                        onComplete={handleTypingComplete}
+                        className="hacker-text-style"
+                        components={{
+                          pre: ({ node, ...props }) => (
+                            <div style={{ position: 'relative' }} {...props} />
+                          ),
+                          code: CodeBlock,
+                          ul: ({ node, ...props }) => (
+                            <ul className="markdown-list" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="markdown-list" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="markdown-list-item" {...props} />
+                          ),
+                          p: ({ node, ...props }) => (
+                            <p className="markdown-paragraph" {...props} />
+                          )
+                        }}
+                      />
+                    </div>
                   ) : (
                     message.text
                   )
                 ) : (
-                  message.text
+                  <div className="markdown-content">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
+                      rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                      components={{
+                        pre: ({ node, ...props }) => (
+                          <div style={{ position: 'relative' }} {...props} />
+                        ),
+                        code: CodeBlock,
+                        ul: ({ node, ...props }) => (
+                          <ul className="markdown-list" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="markdown-list" {...props} />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li className="markdown-list-item" {...props} />
+                        ),
+                        p: ({ node, ...props }) => (
+                          <p className="markdown-paragraph" {...props} />
+                        )
+                      }}
+                    >
+                      {message.text}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
             </div>
