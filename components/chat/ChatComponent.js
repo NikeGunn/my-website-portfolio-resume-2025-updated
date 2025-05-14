@@ -226,7 +226,42 @@ const ChatComponent = () => {
   const CodeBlock = ({ node, inline, className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
     const language = match && match[1] ? match[1] : '';
-    const codeContent = String(children).replace(/\n$/, '');
+
+    // Improved approach to extract code content properly
+    const getCodeContent = () => {
+      // First try to get the raw text content for better preservation of formatting
+      if (typeof children === 'string') {
+        return children;
+      }
+
+      // For handling React element children arrays
+      if (Array.isArray(children)) {
+        // Map through and collect all text content while preserving line breaks
+        return React.Children.toArray(children)
+          .map(child => {
+            if (typeof child === 'string') return child;
+            // Handle React elements that might contain strings
+            if (child?.props?.children) {
+              if (typeof child.props.children === 'string') {
+                return child.props.children;
+              }
+              // Recursively handle deeper nested elements
+              if (Array.isArray(child.props.children)) {
+                return child.props.children.map(c =>
+                  typeof c === 'string' ? c : ''
+                ).join('');
+              }
+            }
+            return '';
+          })
+          .join('');
+      }
+
+      // Fallback for other scenarios
+      return String(children || '');
+    };
+
+    const codeContent = getCodeContent();
 
     return !inline ? (
       <div className="code-block-container" data-language={language}>

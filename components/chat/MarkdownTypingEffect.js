@@ -94,6 +94,7 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
         components={components}
+        skipHtml={false} // Ensures HTML is not skipped during rendering
       >
         {displayedText}
       </ReactMarkdown>

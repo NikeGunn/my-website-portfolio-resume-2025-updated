@@ -816,6 +816,8 @@ img {
   padding: 8px 12px;
   background-color: rgba(30, 41, 59, 0.7);
   border-bottom: 1px solid rgba(48, 194, 203, 0.3);
+  min-height: 36px;
+  /* Ensure minimum height for clickability */
 }
 
 .code-language {
@@ -834,18 +836,37 @@ img {
 }
 
 .copy-button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   border-radius: 4px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Ensure the button stays on the right */
   margin-left: auto;
+  z-index: 10;
+  /* Ensure button is above other elements */
+  position: relative;
+  /* Ensure z-index works */
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: scale(1.05);
+}
+
+.copy-button:active {
+  transform: scale(0.95);
+}
+
+/* Make button more noticeable on hover */
+.code-block-container:hover .copy-button {
+  background: rgba(255, 255, 255, 0.15);
+  color: #30C2CB;
 }
 
 .markdown-content .code-block {
