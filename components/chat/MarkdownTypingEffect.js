@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -11,9 +11,21 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
   const [displayedText, setDisplayedText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const containerRef = useRef(null);
+  const timerRef = useRef(null);
+  const currentIndexRef = useRef(0);
+  const textRef = useRef(text);
 
-  // Random typing speed variations to make it look more human-like but extremely fast
-  const getRandomTypingDelay = () => {
+  // Update the ref when text changes
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
+
+  // Memoize markdown plugins to prevent unnecessary re-creation
+  const remarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
+  const rehypePlugins = useMemo(() => [rehypeRaw, rehypeHighlight], []);
+
+  // Random typing speed variations with optimization
+  const getRandomTypingDelay = useCallback(() => {
     // Base delay is very short for ultra-fast typing
     const baseDelay = Math.max(5, 20 - (speed * 4));
     // Add randomness (occasionally types multiple characters at once for "hacker" effect)
@@ -29,7 +41,37 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
       // Normal mode (still very fast)
       return baseDelay + (Math.random() * baseDelay * 0.5);
     }
-  };
+  }, [speed]);
+
+  // Optimized typing function that uses refs to avoid closures with stale values
+  const typeNextCharacter = useCallback(() => {
+    if (currentIndexRef.current >= textRef.current.length) {
+      setIsComplete(true);
+      onComplete();
+      return;
+    }
+
+    // Batch multiple characters at once for performance
+    let charsToAdd = Math.min(10, Math.floor(Math.random() * 15) + 5);
+
+    // Ensure we don't exceed text length
+    if (currentIndexRef.current + charsToAdd > textRef.current.length) {
+      charsToAdd = textRef.current.length - currentIndexRef.current;
+    }
+
+    // Add the characters
+    const nextChunk = textRef.current.substring(
+      currentIndexRef.current,
+      currentIndexRef.current + charsToAdd
+    );
+    currentIndexRef.current += charsToAdd;
+
+    setDisplayedText(prevText => prevText + nextChunk);
+
+    // Schedule next chunk with variable timing
+    const delay = getRandomTypingDelay();
+    timerRef.current = setTimeout(typeNextCharacter, delay);
+  }, [getRandomTypingDelay, onComplete]);
 
   useEffect(() => {
     if (!text) return;
@@ -37,53 +79,22 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
     // Reset when text changes
     setDisplayedText('');
     setIsComplete(false);
+    currentIndexRef.current = 0;
 
-    let currentIndex = 0;
-    let typeNextCharacter;
-
-    // Function to type the next character or chunk
-    typeNextCharacter = () => {
-      if (currentIndex >= text.length) {
-        setIsComplete(true);
-        onComplete();
-        return;
-      }
-
-      // Determine how many characters to type at once (hacker effect)
-      let charsToAdd = 1;
-      const burstProbability = Math.random();
-
-      if (burstProbability > 0.9) {
-        // Occasionally type 5-10 characters at once (hacker burst mode)
-        charsToAdd = Math.floor(Math.random() * 6) + 5;
-      } else if (burstProbability > 0.7) {
-        // Sometimes type 2-4 characters at once
-        charsToAdd = Math.floor(Math.random() * 3) + 2;
-      }
-
-      // Ensure we don't exceed text length
-      if (currentIndex + charsToAdd > text.length) {
-        charsToAdd = text.length - currentIndex;
-      }
-
-      // Add the characters
-      const nextChunk = text.substring(currentIndex, currentIndex + charsToAdd);
-      currentIndex += charsToAdd;
-
-      setDisplayedText(prevText => prevText + nextChunk);
-
-      // Schedule next character with variable timing
-      const delay = getRandomTypingDelay();
-      setTimeout(typeNextCharacter, delay);
-    };
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
 
     // Start typing after a small initial delay
-    const initialTimer = setTimeout(typeNextCharacter, 100);
+    timerRef.current = setTimeout(typeNextCharacter, 50);
 
     return () => {
-      clearTimeout(initialTimer);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
-  }, [text, speed, onComplete]);
+  }, [text, typeNextCharacter]);
 
   return (
     <div
@@ -91,10 +102,10 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
       className={`markdown-typing-container ${className}`}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         components={components}
-        skipHtml={false} // Ensures HTML is not skipped during rendering
+        skipHtml={false}
       >
         {displayedText}
       </ReactMarkdown>
@@ -105,4 +116,5 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
   );
 };
 
-export default MarkdownTypingEffect;
+// Prevent unnecessary re-renders
+export default React.memo(MarkdownTypingEffect);

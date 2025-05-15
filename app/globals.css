@@ -369,6 +369,7 @@ img {
   background-color: #1e293b;
 }
 
+/* Optimize wrapper for better performance */
 .chat-input-wrapper {
   display: flex;
   background-color: #334155;
@@ -377,13 +378,14 @@ img {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+
+  /* Performance optimizations */
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-.chat-input-wrapper:focus-within {
-  border-color: #30C2CB;
-  box-shadow: 0 0 0 2px rgba(48, 194, 203, 0.2);
-}
-
+/* Chat Input Optimizations */
 .chat-input {
   flex: 1;
   background: transparent;
@@ -396,6 +398,40 @@ img {
   line-height: 1.5;
   max-height: 150px;
   min-height: 24px;
+
+  /* Enable scrolling for long content */
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+
+  /* Performance optimizations */
+  will-change: height, transform;
+  transform: translateZ(0);
+  -webkit-font-smoothing: subpixel-antialiased;
+  backface-visibility: hidden;
+}
+
+/* Custom scrollbar for the chat input */
+.chat-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-input::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+}
+
+.chat-input::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-input-wrapper:focus-within {
+  border-color: #30C2CB;
+  box-shadow: 0 0 0 2px rgba(48, 194, 203, 0.2);
 }
 
 .chat-input::placeholder {

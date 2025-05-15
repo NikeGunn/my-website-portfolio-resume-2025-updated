@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import HackerTypingEffect from '../HackerTypingEffect';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from 'react';
 import MarkdownTypingEffect from './MarkdownTypingEffect';
 import ThinkingEffect from './ThinkingEffect';
 import ReactMarkdown from 'react-markdown';
@@ -10,29 +9,108 @@ import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import remarkBreaks from 'remark-breaks';
 import CopyButton from './CopyButton';
-import 'highlight.js/styles/github-dark.css';
-import 'highlight.js/styles/atom-one-dark.css'; // A better style for code
+import { debounce } from 'lodash'; // We'll use lodash's debounce function
+// Only import one highlight.js style, not both
+import 'highlight.js/styles/atom-one-dark.css';
+
+// Create optimized, memoized CodeBlock component outside the main component
+const CodeBlock = React.memo(({ node, inline, className, children, ...props }) => {
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match && match[1] ? match[1] : '';
+
+  // Improved approach to extract code content efficiently
+  const codeContent = useMemo(() => {
+    // For simple string children
+    if (typeof children === 'string') return children;
+
+    // For React element arrays, efficiently extract text content
+    if (Array.isArray(children)) {
+      return React.Children.toArray(children)
+        .map(child => {
+          if (typeof child === 'string') return child;
+          // Handle direct React elements with string children
+          if (child?.props?.children) {
+            return typeof child.props.children === 'string'
+              ? child.props.children
+              : '';
+          }
+          return '';
+        })
+        .join('');
+    }
+
+    // Fallback
+    return String(children || '');
+  }, [children]);
+
+  return !inline ? (
+    <div className="code-block-container" data-language={language}>
+      <div className="code-block-header">
+        <span className="code-language">{language}</span>
+        <CopyButton textToCopy={codeContent} />
+      </div>
+      <pre className="code-block">
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
+  ) : (
+    <code className="inline-code" {...props}>
+      {children}
+    </code>
+  );
+});
+
+// Add display name for debugging
+CodeBlock.displayName = 'CodeBlock';
 
 const ChatComponent = () => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isThinking, setIsThinking] = useState(false); // New state for thinking effect
+  const [isThinking, setIsThinking] = useState(false);
   const [currentBotText, setCurrentBotText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
-  const [sessionId, setSessionId] = useState(null); // Add state for session ID
+  const [sessionId, setSessionId] = useState(null);
+  const [textareaHeight, setTextareaHeight] = useState('auto');
+
+  // Refs
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const textareaRef = useRef(null);
   const chatMessagesRef = useRef(null);
-  const shouldScrollRef = useRef(false); // Changed to false by default
+  const shouldScrollRef = useRef(false);
 
-  // API endpoint from environment variable - fallback is just a placeholder
-  // The actual URL will only be set in the .env file, not in the code
+  // API endpoint
   const API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || '/api/chat';
 
-  // Load session ID from localStorage on component mount
+  // Memoize markdown plugins to prevent unnecessary re-creation
+  const remarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
+  const rehypePlugins = useMemo(() => [rehypeRaw, rehypeHighlight], []);
+
+  // Memoize markdown component configs
+  const markdownComponents = useMemo(() => ({
+    pre: ({ node, ...props }) => (
+      <div style={{ position: 'relative' }} {...props} />
+    ),
+    code: CodeBlock,
+    ul: ({ node, ...props }) => (
+      <ul className="markdown-list" {...props} />
+    ),
+    ol: ({ node, ...props }) => (
+      <ol className="markdown-list" {...props} />
+    ),
+    li: ({ node, ...props }) => (
+      <li className="markdown-list-item" {...props} />
+    ),
+    p: ({ node, ...props }) => (
+      <p className="markdown-paragraph" {...props} />
+    )
+  }), []);
+
+  // Load session ID
   useEffect(() => {
     const savedSessionId = localStorage.getItem('chat_session_id');
     if (savedSessionId) {
@@ -40,206 +118,252 @@ const ChatComponent = () => {
     }
   }, []);
 
+  // Initial greeting
   useEffect(() => {
-    // Add initial greeting on first load, but don't auto-scroll
     if (messages.length === 0) {
       const greeting = "Hello! I'm Hauba Nikhil Bhagat's AI assistant. How can I help you today?";
       setTimeout(() => {
-        // Add greeting without forcing scroll
         setCurrentBotText(greeting);
         setIsTypingComplete(false);
         setMessages([{ text: '', isUser: false, isTyping: true }]);
       }, 800);
     }
-
-    // Don't auto-focus the chat input on page load
-    // This prevents the browser from scrolling to the chat
-
-    // Mark initial render complete after component mounts
     setInitialRender(false);
-  }, []);
+  }, [messages.length]);
 
-  // Save session ID to localStorage whenever it changes
+  // Save session ID
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem('chat_session_id', sessionId);
     }
   }, [sessionId]);
 
-  useEffect(() => {
-    // Auto-resize textarea based on content
-    if (textareaRef.current) {
+  // Create a debounced input change handler
+  const debouncedInputHandler = useMemo(() =>
+    debounce((value) => {
+      setInputValue(value);
+    }, 50), // Increase debounce time from 10ms to 50ms for better performance
+  []);
+
+  // Create a separate memoized handler for auto-resizing using RAF for better performance
+  const autoResizeTextarea = useCallback(() => {
+    if (!textareaRef.current) return;
+
+    // Use requestAnimationFrame for smoother resize operations
+    requestAnimationFrame(() => {
+      // Store current scroll position of the textarea itself
+      const scrollPos = textareaRef.current.scrollTop;
+      const cursorPosition = textareaRef.current.selectionStart;
+
+      // Reset height temporarily to get the correct scrollHeight
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+
+      // Calculate new height but cap it at max-height
+      // This is key - we cap the height and let scrolling take over after that
+      const calculatedScrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 150; // This should match the CSS max-height
+      const newHeight = `${Math.min(maxHeight, calculatedScrollHeight)}px`;
+
+      // Apply new height
+      textareaRef.current.style.height = newHeight;
+
+      // Only update state if height changed significantly to prevent unnecessary renders
+      if (Math.abs(parseInt(textareaHeight) - parseInt(newHeight)) > 2) {
+        setTextareaHeight(newHeight);
+      }
+
+      // Restore textarea scroll position and cursor
+      textareaRef.current.scrollTop = scrollPos;
+      if (document.activeElement === textareaRef.current) {
+        textareaRef.current.setSelectionRange(cursorPosition, cursorPosition);
+      }
+    });
+  }, [textareaHeight]);
+
+  // Optimized input change handler with enhanced performance
+  const handleInputChange = useCallback((e) => {
+    // Use event.target.value directly for more consistent access
+    const newValue = e.target.value;
+
+    // Only perform DOM updates if we have a valid reference
+    if (textareaRef.current) {
+      // Store the selection position before modifying
+      const selectionStart = textareaRef.current.selectionStart;
+      const selectionEnd = textareaRef.current.selectionEnd;
+
+      // Update value directly to avoid React re-rendering delays
+      textareaRef.current.value = newValue;
+
+      // Immediately run auto-resize after direct DOM update
+      requestAnimationFrame(() => {
+        autoResizeTextarea();
+
+        // Restore cursor position after the resize
+        if (document.activeElement === textareaRef.current) {
+          textareaRef.current.setSelectionRange(selectionStart, selectionEnd);
+        }
+      });
     }
+
+    // Use debounced handler for state updates to avoid excessive renders
+    debouncedInputHandler(newValue);
+  }, [debouncedInputHandler, autoResizeTextarea]);
+
+  // Optimized ref callback - memoized to prevent recreation on each render
+  const textareaRefCallback = useCallback(element => {
+    if (element) {
+      textareaRef.current = element;
+      chatInputRef.current = element;
+      // Auto-resize on mount
+      autoResizeTextarea();
+    }
+  }, [autoResizeTextarea]);
+
+  // Apply the height style directly when it changes
+  useEffect(() => {
+    if (textareaRef.current && textareaHeight !== 'auto') {
+      textareaRef.current.style.height = textareaHeight;
+    }
+  }, [textareaHeight]);
+
+  // Cancel debounced functions on unmount
+  useEffect(() => {
+    return () => {
+      debouncedInputHandler.cancel();
+    };
+  }, [debouncedInputHandler]);
+
+  // Replace the old textarea auto-resize effect with a cleanup
+  useEffect(() => {
+    // Cleanup only - actual resizing is handled directly in the handleInputChange function
+    return () => {
+      // Clean up any resources if needed
+    };
   }, [inputValue]);
 
+  // Scroll handling - optimized to use RAF for smooth scrolling
   useEffect(() => {
-    // Only scroll within the chat container, not the page
-    // And only when user has interacted with the chat
-    if (shouldScrollRef.current && messagesEndRef.current && chatMessagesRef.current) {
-      // Use scrollIntoView with options that prevent page scrolling
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
+    if (shouldScrollRef.current && messagesEndRef.current) {
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        messagesEndRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
       });
     }
   }, [messages, initialRender]);
 
-  // Check if user has scrolled up and is reading previous messages
-  const handleScroll = () => {
+  // Check if user has scrolled up
+  const handleScroll = useCallback(() => {
     if (!chatMessagesRef.current) return;
 
     const { scrollTop, scrollHeight, clientHeight } = chatMessagesRef.current;
     const isCloseToBottom = scrollHeight - scrollTop - clientHeight < 100;
-
-    // Only auto-scroll if we're already near the bottom
     shouldScrollRef.current = isCloseToBottom;
-  };
+  }, []);
 
-  // Only enable auto-scrolling when user interacts with the chat
-  const handleChatInteraction = () => {
+  // Enable auto-scrolling
+  const handleChatInteraction = useCallback(() => {
     shouldScrollRef.current = true;
-  };
+  }, []);
 
-  const scrollToBottom = () => {
-    if (messagesEndRef.current && chatMessagesRef.current) {
-      // Use scrollIntoView with options that prevent page scrolling
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
-      });
+  // Optimized code detection function
+  const formatCodeInUserMessage = useCallback((text) => {
+    // Quick checks to avoid unnecessary processing
+    if (!text || text.includes('```')) {
+      return text; // Already formatted or empty
     }
-  };
 
-  // Function to detect and format code in text
-  const formatCodeInUserMessage = (text) => {
-    // Split the message into lines to check for patterns
     const lines = text.split('\n');
 
-    // Check if the message follows the pattern: "text" + newline + "code"
-    // For example: "solve this issue" + newline + "function example() {...}"
+    // Check for text + code pattern
     if (lines.length > 1) {
-      // Check if there's a code block after the first line
       const potentialCode = lines.slice(1).join('\n').trim();
 
       if (potentialCode && potentialCode.length > 0) {
-        // Check if the second part looks like code
-        const looksLikeCode =
-          // JavaScript/React/TypeScript patterns
-          (potentialCode.includes('function') || potentialCode.includes('=>')) ||
-          potentialCode.includes('const ') || potentialCode.includes('let ') ||
-          potentialCode.includes('var ') || potentialCode.includes('import ') ||
-          potentialCode.includes('export ') || potentialCode.includes('class ') ||
-          // HTML/JSX patterns
-          (potentialCode.includes('<') && potentialCode.includes('>')) ||
-          // Brackets and parentheses
-          (potentialCode.includes('{') && potentialCode.match(/[{}]/g)?.length >= 2) ||
-          (potentialCode.includes('(') && potentialCode.includes(')')) ||
-          // Common code keywordsi hafv
-          potentialCode.includes('return ') ||
-          potentialCode.includes('for(') || potentialCode.includes('while(') ||
-          // Hook and component patterns
-          potentialCode.includes('useState') || potentialCode.includes('useEffect') ||
-          // Multiple lines with indentation or common code patterns
-          (potentialCode.split('\n').length > 1 &&
-            (/^\s+/m.test(potentialCode) || /[;{}()[\]]/.test(potentialCode)));
+        // Simplified code detection with regex
+        const codePatterns = [
+          /function\s*\w*\s*\([^)]*\)\s*\{/,  // function definitions
+          /const|let|var\s+\w+\s*=/,          // variable declarations
+          /import\s+.*\s+from/,               // imports
+          /class\s+\w+/,                      // class definitions
+          /<\w+[^>]*>.*<\/\w+>/s,             // HTML tags
+          /\{[\s\S]*\}/                       // code blocks
+        ];
+
+        const looksLikeCode = codePatterns.some(pattern => pattern.test(potentialCode));
 
         if (looksLikeCode) {
-          // Try to detect the language
-          let language = 'javascript'; // Default to JavaScript for React code
+          // Detect language
+          let language = 'javascript';
 
-          if (potentialCode.includes('def ') || potentialCode.includes('import ') &&
-              potentialCode.includes(':') && !potentialCode.includes(';')) {
+          if (/def\s+\w+\s*\([^)]*\):|import\s+\w+\s*$|^\s*@/.test(potentialCode)) {
             language = 'python';
-          } else if ((potentialCode.includes('<div') || potentialCode.includes('<span') ||
-                    potentialCode.includes('</') || potentialCode.includes('<html')) &&
-                    !potentialCode.includes('import React') && !potentialCode.includes('useState')) {
+          } else if (/<html|<div|<span|<\//.test(potentialCode) && !(/import React|useState/.test(potentialCode))) {
             language = 'html';
-          } else if (potentialCode.includes('.class') || potentialCode.includes('#id') ||
-                    potentialCode.includes('@media') || (potentialCode.includes('{') &&
-                    potentialCode.includes('}') && potentialCode.includes(':') &&
-                    !potentialCode.includes('function'))) {
+          } else if (/\.\w+\s*\{|\#\w+\\s*\{|@media/.test(potentialCode)) {
             language = 'css';
           }
 
-          // Return the first line as is, plus formatted code
           return lines[0] + '\n\n```' + language + '\n' + potentialCode + '\n```';
         }
       }
     }
 
-    // If message doesn't match our "text + code" pattern, check if it's entirely code
-    if (text.includes('```')) {
-      return text; // Already formatted, no need to change
-    }
+    // Check if entire message is code
+    const codePatterns = [
+      /function\s+\w+\s*\([^)]*\)\s*\{[\s\S]*\}/,
+      /class\s+\w+\s*(extends\s+\w+)?\s*\{[\s\S]*\}/,
+      /import\s+.*\s+from\s+['"].*['"];/,
+      /<\w+[^>]*>[\s\S]*<\/\w+>/
+    ];
 
-    // Check if the entire text looks like code
-    const looksLikeCode =
-      (text.includes('function') && text.includes('{') && text.includes('}')) ||
-      (text.includes('class') && text.includes('extends') && text.includes('{')) ||
-      (text.includes('import') && text.includes('from') && text.includes(';')) ||
-      (text.includes('const') && text.includes('=') && text.includes('=>')) ||
-      (text.includes('<') && text.includes('>') && text.includes('</')) ||
-      (text.split('\n').length > 2 && text.includes('{') && text.includes('}') &&
-       (text.includes('function') || text.includes('const') || text.includes('class')));
+    const isFullCode = codePatterns.some(pattern => pattern.test(text));
 
-    if (looksLikeCode) {
-      // Try to detect the language
-      let language = 'javascript'; // Default to JavaScript for React code
+    if (isFullCode) {
+      let language = 'javascript';
 
-      if (text.includes('def ') || text.includes('import ') &&
-          text.includes(':') && !text.includes(';')) {
+      if (/def\s+\w+\s*\([^)]*\):|import\s+\w+\s*$/.test(text)) {
         language = 'python';
-      } else if ((text.includes('<div') || text.includes('<span') ||
-                text.includes('</') || text.includes('<html')) &&
-                !text.includes('import React') && !text.includes('useState')) {
+      } else if (/<html|<div|<span|<\//.test(text) && !(/import React|useState/.test(text))) {
         language = 'html';
-      } else if (text.includes('.class') || text.includes('#id') ||
-                text.includes('@media') || (text.includes('{') &&
-                text.includes('}') && text.includes(':') &&
-                !text.includes('function'))) {
+      } else if (/\.\w+\s*\{|\#\w+\s*\{|@media/.test(text)) {
         language = 'css';
       }
 
-      // Format the entire message as code
       return '```' + language + '\n' + text + '\n```';
     }
 
-    return text; // Return original text if not code
-  };
+    return text;
+  }, []);
 
-  const addUserMessage = (message) => {
-    shouldScrollRef.current = true; // Always scroll for user messages
-
-    // Format code in user message if present
+  // Message handling functions
+  const addUserMessage = useCallback((message) => {
+    shouldScrollRef.current = true;
     const formattedMessage = formatCodeInUserMessage(message);
 
     setMessages(prevMessages => [
       ...prevMessages,
       { text: formattedMessage, isUser: true }
     ]);
-  };
+  }, [formatCodeInUserMessage]);
 
-  const addBotMessage = (message) => {
-    // Set the current text to be typed and mark typing as incomplete
+  const addBotMessage = useCallback((message) => {
     setCurrentBotText(message);
     setIsTypingComplete(false);
 
-    // Add empty message that will be filled by the typing effect
     setMessages(prevMessages => [
       ...prevMessages,
       { text: '', isUser: false, isTyping: true }
     ]);
-  };
+  }, []);
 
-  const handleTypingComplete = () => {
+  const handleTypingComplete = useCallback(() => {
     setIsTypingComplete(true);
     setIsTyping(false);
 
-    // Update the last message with the complete text
     setMessages(prevMessages => {
       const newMessages = [...prevMessages];
       // Find the last bot message and update it
@@ -255,150 +379,190 @@ const ChatComponent = () => {
       }
       return newMessages;
     });
-  };
+  }, [currentBotText]);
 
-  const handleSend = async () => {
-    // Enable auto-scrolling when sending a message
+  // Handle sending messages
+  const handleSend = useCallback(async () => {
     handleChatInteraction();
-
     const message = inputValue.trim();
 
-    if (message) {
-      addUserMessage(message);
-      setInputValue('');
+    if (!message) return;
 
-      // Show thinking effect
-      setIsThinking(true);
+    addUserMessage(message);
+    setInputValue('');
+    setIsThinking(true);
 
-      try {
-        // Create request body with question and session ID if available
-        const requestBody = {
-          question: message
-        };
+    try {
+      // Create request body
+      const requestBody = {
+        question: message
+      };
 
-        // Add session ID to request if we have one
-        if (sessionId) {
-          requestBody.session_id = sessionId;
-        }
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-
-        // Store the session ID from the response
-        if (data.session_id) {
-          setSessionId(data.session_id);
-        }
-
-        // Hide thinking effect and show typing effect
-        setIsThinking(false);
-        setIsTyping(true);
-
-        // Short delay to make the transition smoother
-        setTimeout(() => {
-          // Instead of immediately showing the message, we'll use the typing effect
-          addBotMessage(data.answer);
-        }, 300);
-
-      } catch (error) {
-        console.error('Error:', error);
-        setIsThinking(false);
-        setIsTyping(false);
-
-        // Add error message
-        setTimeout(() => {
-          addBotMessage("Sorry, I couldn't process your request. Please try again later.");
-        }, 500);
+      if (sessionId) {
+        requestBody.session_id = sessionId;
       }
-    }
-  };
 
-  const handleKeyDown = (e) => {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+
+      if (data.session_id) {
+        setSessionId(data.session_id);
+      }
+
+      setIsThinking(false);
+      setIsTyping(true);
+
+      setTimeout(() => {
+        addBotMessage(data.answer);
+      }, 300);
+    } catch (error) {
+      console.error('Error:', error);
+      setIsThinking(false);
+      setIsTyping(false);
+
+      setTimeout(() => {
+        addBotMessage("Sorry, I couldn't process your request. Please try again later.");
+      }, 500);
+    }
+  }, [inputValue, sessionId, API_URL, addUserMessage, addBotMessage, handleChatInteraction]);
+
+  // Optimize for key combinations and special inputs
+  const handleKeyDown = useCallback((e) => {
+    // Handle Enter key press for sending
     if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent default to avoid adding a newline
+
+      // Get the input value directly from the textarea for better performance
+      const message = textareaRef.current?.value.trim();
+
+      if (message) {
+        // Update the value directly
+        if (textareaRef.current) {
+          textareaRef.current.value = '';
+          // Reset height immediately
+          textareaRef.current.style.height = 'auto';
+          setTextareaHeight('auto');
+        }
+
+        // Execute send after DOM updates complete
+        requestAnimationFrame(() => {
+          handleSend();
+        });
+      }
+    } else if (e.key === 'Tab') {
+      // Prevent tab from leaving the textarea
       e.preventDefault();
-      handleSend();
+
+      // Insert a tab character (4 spaces is common)
+      if (textareaRef.current) {
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const spaces = '    ';
+
+        // Insert spaces at cursor position
+        const newValue = textareaRef.current.value.substring(0, start) +
+                        spaces +
+                        textareaRef.current.value.substring(end);
+
+        // Update value directly
+        textareaRef.current.value = newValue;
+
+        // Set cursor position after the inserted tab
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + spaces.length;
+
+        // Trigger resize and update state
+        autoResizeTextarea();
+        debouncedInputHandler(newValue);
+      }
     } else {
-      // Enable auto-scrolling when typing
+      // Always handle chat interaction for other keys
       handleChatInteraction();
     }
-  };
+  }, [handleSend, handleChatInteraction, autoResizeTextarea, debouncedInputHandler]);
 
-  const CodeBlock = ({ node, inline, className, children, ...props }) => {
-    const match = /language-(\w+)/.exec(className || '');
-    const language = match && match[1] ? match[1] : '';
+  // Reset conversation
+  const resetConversation = useCallback(() => {
+    setSessionId(null);
+    localStorage.removeItem('chat_session_id');
+    setMessages([]);
+    setTimeout(() => {
+      const greeting = "Hello! I'm Hauba Nikhil Bhagat's AI assistant. How can I help you today?";
+      setCurrentBotText(greeting);
+      setIsTypingComplete(false);
+      setMessages([{ text: '', isUser: false, isTyping: true }]);
+    }, 300);
+  }, []);
 
-    // Improved approach to extract code content properly
-    const getCodeContent = () => {
-      // First try to get the raw text content for better preservation of formatting
-      if (typeof children === 'string') {
-        return children;
-      }
-
-      // For handling React element children arrays
-      if (Array.isArray(children)) {
-        // Map through and collect all text content while preserving line breaks
-        return React.Children.toArray(children)
-          .map(child => {
-            if (typeof child === 'string') return child;
-            // Handle React elements that might contain strings
-            if (child?.props?.children) {
-              if (typeof child.props.children === 'string') {
-                return child.props.children;
-              }
-              // Recursively handle deeper nested elements
-              if (Array.isArray(child.props.children)) {
-                return child.props.children.map(c =>
-                  typeof c === 'string' ? c : ''
-                ).join('');
-              }
-            }
-            return '';
-          })
-          .join('');
-      }
-
-      // Fallback for other scenarios
-      return String(children || '');
-    };
-
-    const codeContent = getCodeContent();
-
-    return !inline ? (
-      <div className="code-block-container" data-language={language}>
-        <div className="code-block-header">
-          <span className="code-language">{language}</span>
-          <CopyButton textToCopy={codeContent} />
+  // Render messages with memo to prevent unnecessary re-renders
+  const renderMessages = useMemo(() => {
+    return messages.map((message, index) => (
+      <div key={index} className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+        {!message.isUser && (
+          <div className="bot-icon">
+            <img
+              src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
+              alt="Nikhil Bhagat"
+              className="w-full h-full object-cover rounded-full"
+              loading="lazy"
+            />
+          </div>
+        )}
+        <div className="message-content">
+          {message.isUser ? (
+            <div className="markdown-content">
+              <ReactMarkdown
+                remarkPlugins={remarkPlugins}
+                rehypePlugins={rehypePlugins}
+                components={markdownComponents}
+              >
+                {message.text}
+              </ReactMarkdown>
+            </div>
+          ) : message.isTyping ? (
+            // Only apply typing effect to latest bot message
+            index === messages.length - 1 && !isTypingComplete ? (
+              <div className="markdown-content">
+                <MarkdownTypingEffect
+                  text={currentBotText}
+                  speed={3} // Increase typing speed
+                  onComplete={handleTypingComplete}
+                  className="hacker-text-style"
+                  components={markdownComponents}
+                />
+              </div>
+            ) : (
+              message.text
+            )
+          ) : (
+            <div className="markdown-content">
+              <ReactMarkdown
+                remarkPlugins={remarkPlugins}
+                rehypePlugins={rehypePlugins}
+                components={markdownComponents}
+              >
+                {message.text}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
-        <pre className="code-block">
-          <code
-            className={className}
-            {...props}
-          >
-            {children}
-          </code>
-        </pre>
       </div>
-    ) : (
-      <code className="inline-code" {...props}>
-        {children}
-      </code>
-    );
-  };
+    ));
+  }, [messages, isTypingComplete, currentBotText, handleTypingComplete, markdownComponents, remarkPlugins, rehypePlugins]);
 
   return (
     <div
       className="embedded-chat-container"
-      // Enable auto-scrolling on click anywhere in the chat
       onClick={handleChatInteraction}
     >
       <div className="chat-header">
@@ -407,6 +571,7 @@ const ChatComponent = () => {
             src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
             alt="Nikhil Bhagat"
             className="w-full h-full object-cover rounded-full"
+            loading="lazy"
           />
         </div>
         <div className="header-info">
@@ -418,17 +583,7 @@ const ChatComponent = () => {
         </div>
         {sessionId && (
           <button
-            onClick={() => {
-              setSessionId(null);
-              localStorage.removeItem('chat_session_id');
-              setMessages([]);
-              setTimeout(() => {
-                const greeting = "Hello! I'm Hauba Nikhil Bhagat's AI assistant. How can I help you today?";
-                setCurrentBotText(greeting);
-                setIsTypingComplete(false);
-                setMessages([{ text: '', isUser: false, isTyping: true }]);
-              }, 300);
-            }}
+            onClick={resetConversation}
             className="reset-button"
             title="Reset conversation"
           >
@@ -447,106 +602,7 @@ const ChatComponent = () => {
         onScroll={handleScroll}
       >
         <div className="message-container">
-          {messages.map((message, index) => (
-            <div key={index} className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
-              {!message.isUser && <div className="bot-icon">
-                <img
-                  src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
-                  alt="Nikhil Bhagat"
-                  className="w-full h-full object-cover rounded-full"
-                />
-              </div>}
-              <div className="message-content">
-                {message.isUser ? (
-                  <div className="markdown-content">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkBreaks]}
-                      rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                      components={{
-                        pre: ({ node, ...props }) => (
-                          <div style={{ position: 'relative' }} {...props} />
-                        ),
-                        code: CodeBlock,
-                        ul: ({ node, ...props }) => (
-                          <ul className="markdown-list" {...props} />
-                        ),
-                        ol: ({ node, ...props }) => (
-                          <ol className="markdown-list" {...props} />
-                        ),
-                        li: ({ node, ...props }) => (
-                          <li className="markdown-list-item" {...props} />
-                        ),
-                        p: ({ node, ...props }) => (
-                          <p className="markdown-paragraph" {...props} />
-                        )
-                      }}
-                    >
-                      {message.text}
-                    </ReactMarkdown>
-                  </div>
-                ) : message.isTyping ? (
-                  // Only apply the typing effect to the latest bot message
-                  index === messages.length - 1 && !isTypingComplete ? (
-                    <div className="markdown-content">
-                      <MarkdownTypingEffect
-                        text={currentBotText}
-                        speed={2.5}
-                        onComplete={handleTypingComplete}
-                        className="hacker-text-style"
-                        components={{
-                          pre: ({ node, ...props }) => (
-                            <div style={{ position: 'relative' }} {...props} />
-                          ),
-                          code: CodeBlock,
-                          ul: ({ node, ...props }) => (
-                            <ul className="markdown-list" {...props} />
-                          ),
-                          ol: ({ node, ...props }) => (
-                            <ol className="markdown-list" {...props} />
-                          ),
-                          li: ({ node, ...props }) => (
-                            <li className="markdown-list-item" {...props} />
-                          ),
-                          p: ({ node, ...props }) => (
-                            <p className="markdown-paragraph" {...props} />
-                          )
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    message.text
-                  )
-                ) : (
-                  <div className="markdown-content">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkBreaks]}
-                      rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                      components={{
-                        pre: ({ node, ...props }) => (
-                          <div style={{ position: 'relative' }} {...props} />
-                        ),
-                        code: CodeBlock,
-                        ul: ({ node, ...props }) => (
-                          <ul className="markdown-list" {...props} />
-                        ),
-                        ol: ({ node, ...props }) => (
-                          <ol className="markdown-list" {...props} />
-                        ),
-                        li: ({ node, ...props }) => (
-                          <li className="markdown-list-item" {...props} />
-                        ),
-                        p: ({ node, ...props }) => (
-                          <p className="markdown-paragraph" {...props} />
-                        )
-                      }}
-                    >
-                      {message.text}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+          {renderMessages}
 
           {/* Thinking effect */}
           {isThinking && (
@@ -556,6 +612,7 @@ const ChatComponent = () => {
                   src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
                   alt="Nikhil Bhagat"
                   className="w-full h-full object-cover rounded-full"
+                  loading="lazy"
                 />
               </div>
               <div className="message-content">
@@ -573,6 +630,7 @@ const ChatComponent = () => {
                   src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
                   alt="Nikhil Bhagat"
                   className="w-full h-full object-cover rounded-full"
+                  loading="lazy"
                 />
               </div>
               <div className="message-content">
@@ -590,23 +648,21 @@ const ChatComponent = () => {
       <div className="chat-input-container">
         <div className="chat-input-wrapper">
           <textarea
-            ref={(el) => {
-              chatInputRef.current = el;
-              textareaRef.current = el;
-            }}
+            ref={textareaRefCallback}
             className="chat-input"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            defaultValue={inputValue} // Use defaultValue instead of value for better performance
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Type your message here..."
             rows="1"
             autoComplete="off"
-            disabled={isThinking} // Disable input while thinking
+            disabled={isThinking}
+            style={{ height: textareaHeight, overflowY: 'auto' }}
           ></textarea>
           <button
             className="send-button"
             onClick={handleSend}
-            disabled={inputValue.trim() === '' || isThinking} // Disable button while thinking
+            disabled={!textareaRef.current?.value.trim() || isThinking}
             aria-label="Send message"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -619,4 +675,5 @@ const ChatComponent = () => {
   );
 };
 
-export default ChatComponent;
+// Prevent unnecessary re-renders of the entire component
+export default React.memo(ChatComponent);

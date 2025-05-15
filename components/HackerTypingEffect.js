@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () => {} }) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -8,26 +8,66 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
   const [showDot, setShowDot] = useState(true);
   const containerRef = useRef(null);
   const cursorRef = useRef(null);
+  const timerRef = useRef(null);
+  const currentIndexRef = useRef(0);
+  const textRef = useRef(text);
 
-  // Random typing speed variations to make it look more human-like but extremely fast
-  const getRandomTypingDelay = () => {
+  // Update the ref when text changes
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
+
+  // Random typing speed variations with optimization
+  const getRandomTypingDelay = useCallback(() => {
     // Base delay is very short for ultra-fast typing
-    const baseDelay = Math.max(5, 20 - (speed * 4));
+    const baseDelay = Math.max(3, 15 - (speed * 4)); // Faster base speed
     // Add randomness (occasionally types multiple characters at once for "hacker" effect)
     const burstProbability = Math.random();
 
-    if (burstProbability > 0.8) {
+    if (burstProbability > 0.7) { // Increased probability for burst mode
       // Burst mode - super fast (almost instant)
       return 1;
-    } else if (burstProbability > 0.6) {
+    } else if (burstProbability > 0.5) { // Increased probability for fast mode
       // Fast mode
       return baseDelay * 0.5;
     } else {
       // Normal mode (still very fast)
-      return baseDelay + (Math.random() * baseDelay * 0.5);
+      return baseDelay + (Math.random() * baseDelay * 0.3); // Reduced randomness
     }
-  };
+  }, [speed]);
 
+  // Optimized typing function using refs to avoid closure issues
+  const typeNextCharacter = useCallback(() => {
+    if (currentIndexRef.current >= textRef.current.length) {
+      setIsComplete(true);
+      setShowDot(false);
+      onComplete();
+      return;
+    }
+
+    // Add more characters at once for better performance
+    let charsToAdd = Math.min(15, Math.floor(Math.random() * 20) + 8); // More aggressive batching
+
+    // Ensure we don't exceed text length
+    if (currentIndexRef.current + charsToAdd > textRef.current.length) {
+      charsToAdd = textRef.current.length - currentIndexRef.current;
+    }
+
+    // Add the characters in a batch
+    const nextChunk = textRef.current.substring(
+      currentIndexRef.current,
+      currentIndexRef.current + charsToAdd
+    );
+    currentIndexRef.current += charsToAdd;
+
+    setDisplayedText(prevText => prevText + nextChunk);
+
+    // Schedule next chunk with variable timing
+    const delay = getRandomTypingDelay();
+    timerRef.current = setTimeout(typeNextCharacter, delay);
+  }, [getRandomTypingDelay, onComplete]);
+
+  // Main effect for typing animation with cleanup
   useEffect(() => {
     if (!text) return;
 
@@ -35,74 +75,75 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
     setDisplayedText('');
     setIsComplete(false);
     setShowDot(true);
+    currentIndexRef.current = 0;
 
-    let currentIndex = 0;
-    let typeNextCharacter;
-
-    // Function to type the next character or chunk
-    typeNextCharacter = () => {
-      if (currentIndex >= text.length) {
-        setIsComplete(true);
-        setShowDot(false);
-        onComplete();
-        return;
-      }
-
-      // Determine how many characters to type at once (hacker effect)
-      let charsToAdd = 1;
-      const burstProbability = Math.random();
-
-      if (burstProbability > 0.9) {
-        // Occasionally type 5-10 characters at once (hacker burst mode)
-        charsToAdd = Math.floor(Math.random() * 6) + 5;
-      } else if (burstProbability > 0.7) {
-        // Sometimes type 2-4 characters at once
-        charsToAdd = Math.floor(Math.random() * 3) + 2;
-      }
-
-      // Ensure we don't exceed text length
-      if (currentIndex + charsToAdd > text.length) {
-        charsToAdd = text.length - currentIndex;
-      }
-
-      // Add the characters
-      const nextChunk = text.substring(currentIndex, currentIndex + charsToAdd);
-      currentIndex += charsToAdd;
-
-      setDisplayedText(prevText => prevText + nextChunk);
-
-      // Schedule next character with variable timing
-      const delay = getRandomTypingDelay();
-      setTimeout(typeNextCharacter, delay);
-    };
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
 
     // Start typing after a small initial delay
-    const initialTimer = setTimeout(typeNextCharacter, 100);
+    timerRef.current = setTimeout(typeNextCharacter, 50);
 
     return () => {
-      clearTimeout(initialTimer);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
-  }, [text, speed, onComplete]);
+  }, [text, typeNextCharacter]);
 
-  // Blinking cursor effect for the dot
+  // Blinking cursor effect using RAF for better performance
   useEffect(() => {
     if (!cursorRef.current) return;
 
-    const blinkInterval = setInterval(() => {
-      if (cursorRef.current && !isComplete) {
-        cursorRef.current.style.opacity = cursorRef.current.style.opacity === '0' ? '1' : '0';
-      }
-    }, 500);
+    let animationFrameId;
+    let lastToggleTime = 0;
+    const blinkInterval = 500; // 500ms toggle
 
-    return () => clearInterval(blinkInterval);
+    const animateCursor = (timestamp) => {
+      if (!cursorRef.current || isComplete) return;
+
+      // Only toggle visibility every 500ms
+      if (timestamp - lastToggleTime >= blinkInterval) {
+        cursorRef.current.style.opacity = cursorRef.current.style.opacity === '0' ? '1' : '0';
+        lastToggleTime = timestamp;
+      }
+
+      animationFrameId = requestAnimationFrame(animateCursor);
+    };
+
+    animationFrameId = requestAnimationFrame(animateCursor);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [isComplete]);
 
-  // Scroll only within the container as typing happens, not the entire page
+  // Handle scrolling with RAF for smoother performance
   useEffect(() => {
-    if (containerRef.current) {
-      // This scroll is now confined to the container only
-      containerRef.current.scrollLeft = containerRef.current.scrollWidth;
-    }
+    if (!containerRef.current) return;
+
+    const handleScroll = () => {
+      if (containerRef.current) {
+        requestAnimationFrame(() => {
+          containerRef.current.scrollLeft = containerRef.current.scrollWidth;
+        });
+      }
+    };
+
+    // Use a more efficient approach to update scroll position
+    const resizeObserver = new ResizeObserver(handleScroll);
+    resizeObserver.observe(containerRef.current);
+
+    // Clean up
+    return () => {
+      if (containerRef.current) {
+        resizeObserver.unobserve(containerRef.current);
+      }
+      resizeObserver.disconnect();
+    };
   }, [displayedText]);
 
   return (
@@ -113,7 +154,6 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
         fontFamily: 'monospace',
         position: 'relative',
         overflow: 'hidden',
-        // Ensure scrolling only happens within this container
         maxWidth: '100%',
         display: 'inline-block'
       }}
@@ -140,4 +180,5 @@ const HackerTypingEffect = ({ text, speed = 1, className = '', onComplete = () =
   );
 };
 
-export default HackerTypingEffect;
+// Prevent unnecessary re-renders
+export default React.memo(HackerTypingEffect);
