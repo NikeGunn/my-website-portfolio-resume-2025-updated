@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HackerTypingEffect from '../HackerTypingEffect';
 import MarkdownTypingEffect from './MarkdownTypingEffect';
+import ThinkingEffect from './ThinkingEffect';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -16,6 +17,7 @@ const ChatComponent = () => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isThinking, setIsThinking] = useState(false); // New state for thinking effect
   const [currentBotText, setCurrentBotText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
@@ -264,7 +266,9 @@ const ChatComponent = () => {
     if (message) {
       addUserMessage(message);
       setInputValue('');
-      setIsTyping(true);
+
+      // Show thinking effect
+      setIsThinking(true);
 
       try {
         // Create request body with question and session ID if available
@@ -296,14 +300,19 @@ const ChatComponent = () => {
           setSessionId(data.session_id);
         }
 
-        // Short delay to make the typing indicator visible
+        // Hide thinking effect and show typing effect
+        setIsThinking(false);
+        setIsTyping(true);
+
+        // Short delay to make the transition smoother
         setTimeout(() => {
           // Instead of immediately showing the message, we'll use the typing effect
           addBotMessage(data.answer);
-        }, 800);
+        }, 300);
 
       } catch (error) {
         console.error('Error:', error);
+        setIsThinking(false);
         setIsTyping(false);
 
         // Add error message
@@ -539,11 +548,29 @@ const ChatComponent = () => {
             </div>
           ))}
 
-          {isTyping && !currentBotText && (
+          {/* Thinking effect */}
+          {isThinking && (
+            <div className="message bot-message">
+              <div className="bot-icon">
+                <img
+                  src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
+                  alt="Nikhil Bhagat"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <div className="message-content">
+                <ThinkingEffect />
+                <div className="neural-network"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Old simple typing indicator - replaced by ThinkingEffect */}
+          {isTyping && !currentBotText && !isThinking && (
             <div className="message bot-message typing-indicator active">
               <div className="bot-icon">
                 <img
-                  src="https://github.com/NikeGunn/imagess/blob/main/nikhil.png?raw=true"
+                  src="https://github.com/NikeGunn/imagess/blob/main/Hauba__5_-removebg-preview.png?raw=true"
                   alt="Nikhil Bhagat"
                   className="w-full h-full object-cover rounded-full"
                 />
@@ -574,11 +601,12 @@ const ChatComponent = () => {
             placeholder="Type your message here..."
             rows="1"
             autoComplete="off"
+            disabled={isThinking} // Disable input while thinking
           ></textarea>
           <button
             className="send-button"
             onClick={handleSend}
-            disabled={inputValue.trim() === ''}
+            disabled={inputValue.trim() === '' || isThinking} // Disable button while thinking
             aria-label="Send message"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
