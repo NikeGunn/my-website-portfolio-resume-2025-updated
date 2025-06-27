@@ -10,7 +10,7 @@ const ChatComponent = lazy(() => import("../components/chat/ChatComponent"));
 const ProfileImage = memo(() => (
   <div className="flex justify-center mb-6">
     <img
-      src="https://github.com/NikeGunn/imagess/blob/main/nikhil.png?raw=true"
+      src="https://github.com/NikeGunn/imagess/blob/main/nikhil-devops.png?raw=true"
       alt="Profile Image of Nikhil Bhagat"
       className="w-40 h-40 rounded-full border-4 border-teal-500 shadow-lg object-cover transition-all duration-500 ease-in-out transform hover:scale-105"
       loading="lazy"
