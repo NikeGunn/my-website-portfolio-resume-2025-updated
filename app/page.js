@@ -15,7 +15,7 @@ const NAV = [
   { label: "Work", href: "#work" },
   { label: "Research", href: "#research" },
   { label: "Projects", href: "#projects" },
-  { label: "Résumé", href: "#resume" },
+  { label: "Resume", href: "#resume" },
   { label: "Ask Hauba", href: "#ask" },
 ];
 
@@ -164,7 +164,7 @@ export default function Home() {
                 href="/nikhil-resume.pdf"
                 className="rounded-full bg-accent px-5 py-2.5 font-semibold text-[color:var(--accent-ink)] no-underline hover:brightness-110"
               >
-                Download résumé
+                Download resume
               </a>
               <a href="mailto:programmer@nikhilbhagat.com.np" className="font-semibold">
                 Email me
@@ -276,12 +276,12 @@ export default function Home() {
           </dl>
         </Section>
 
-        <Section id="resume" title="Résumé">
+        <Section id="resume" title="Resume">
           <div className="grid gap-8 md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start">
-            <a href="/nikhil-resume.pdf" className="block" aria-label="Open the résumé PDF">
+            <a href="/nikhil-resume.pdf" className="block" aria-label="Open the resume PDF">
               <img
                 src="/nikhil-resume-preview.png"
-                alt="First page of Nikhil Bhagat's résumé"
+                alt="First page of Nikhil Bhagat's resume"
                 width="798"
                 height="1033"
                 loading="lazy"
@@ -298,7 +298,7 @@ export default function Home() {
                   href="/nikhil-resume.pdf"
                   className="rounded-full bg-accent px-5 py-2.5 font-semibold text-[color:var(--accent-ink)] no-underline hover:brightness-110"
                 >
-                  Download résumé (PDF)
+                  Download resume (PDF)
                 </a>
               </p>
             </div>
