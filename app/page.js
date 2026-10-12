@@ -59,9 +59,9 @@ const Home = () => {
           <div className="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6 border border-teal-500/20">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-2">Nikhil Bhagat</h3>
-              <p className="text-lg text-teal-300 mb-4">Full-Stack Developer | AI & Android Specialist</p>
+              <p className="text-lg text-teal-300 mb-4">AI/ML Engineer & NLP Researcher | LLM Agents, RAG & AI Safety</p>
               <p className="text-base text-gray-300 mb-4">
-                Full-Stack Developer with expertise in Next.js, React, Android, and AI-driven solutions. Delivering scalable, innovative applications for modern businesses.
+                AI/ML engineer and independent NLP researcher with 6+ years building production backends, ML and generative AI systems for clients in Hong Kong, Japan, Italy, the Philippines and Nepal. I build systems that have to be right, not just fluent.
               </p>
               <a
                 href="/nikhil-resume.pdf"
