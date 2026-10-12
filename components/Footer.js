@@ -1,39 +1,26 @@
-const Footer = () => {
+const Footer = ({ links }) => {
   return (
-    <footer className="bg-gray-900 py-8 mt-12">
-      <div className="container mx-auto text-center">
-        <p className="text-gray-400">Ready to collaborate..?? Let's connect..!!</p>
-        <div className="mt-4 flex justify-center space-x-6">
-          {/* LinkedIn Link */}
-          <a
-            href="https://www.linkedin.com/in/bhagatnikhil/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-300 hover:text-teal-500 transition-all duration-300 flex items-center space-x-2"
-          >
-            <i className="fab fa-linkedin text-2xl"></i>
-            <span className="text-lg">LinkedIn</span>
+    <footer id="contact" className="border-t border-rule">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
+        <h2 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+          Hiring, admitting or collaborating? Write to me.
+        </h2>
+        <p className="mt-6 font-sans text-lg">
+          <a href="mailto:programmer@nikhilbhagat.com.np" className="font-semibold">
+            programmer@nikhilbhagat.com.np
           </a>
-
-          {/* GitHub Link */}
-          <a
-            href="https://github.com/NikeGunn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-300 hover:text-teal-500 transition-all duration-300 flex items-center space-x-2"
-          >
-            <i className="fab fa-github text-2xl"></i>
-            <span className="text-lg">GitHub</span>
-          </a>
-        </div>
-
-        {/* Email Address Section */}
-        <div className="mt-4">
-          <p className="text-gray-300 text-lg">Email: programmer@nikhilbhagat.com.np</p>
-        </div>
-
-        <p className="mt-6 text-sm text-gray-500">
-          © 2025 Nikhil Bhagat. All rights reserved.
+        </p>
+        <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-sans text-[0.92rem]">
+          {links.map((link) => (
+            <li key={link.label}>
+              <a href={link.href} target="_blank" rel="noopener noreferrer">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-12 font-sans text-sm text-muted">
+          © {new Date().getFullYear()} Nikhil Bhagat
         </p>
       </div>
     </footer>

@@ -5,7 +5,6 @@ import MarkdownTypingEffect from './MarkdownTypingEffect';
 import ThinkingEffect from './ThinkingEffect';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import remarkBreaks from 'remark-breaks';
 import CopyButton from './CopyButton';
@@ -88,7 +87,7 @@ const ChatComponent = () => {
 
   // Memoize markdown plugins to prevent unnecessary re-creation
   const remarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
-  const rehypePlugins = useMemo(() => [rehypeRaw, rehypeHighlight], []);
+  const rehypePlugins = useMemo(() => [rehypeHighlight], []);
 
   // Memoize markdown component configs
   const markdownComponents = useMemo(() => ({
@@ -382,11 +381,14 @@ const ChatComponent = () => {
   }, [currentBotText]);
 
   // Handle sending messages
-  const handleSend = useCallback(async () => {
+  // Read the text passed in (Enter key) or straight from the textarea (button click):
+  // inputValue is debounced and can lag behind what was just typed.
+  const handleSend = useCallback(async (text) => {
     handleChatInteraction();
-    const message = inputValue.trim();
+    const message = (typeof text === 'string' ? text : textareaRef.current?.value ?? inputValue).trim();
 
     if (!message) return;
+    if (textareaRef.current) textareaRef.current.value = '';
 
     addUserMessage(message);
     setInputValue('');
@@ -432,7 +434,7 @@ const ChatComponent = () => {
       setIsTyping(false);
 
       setTimeout(() => {
-        addBotMessage("Sorry, I couldn't process your request. Please try again later.");
+        addBotMessage("Hauba can't be reached right now. Try again in a minute, or email programmer@nikhilbhagat.com.np.");
       }, 500);
     }
   }, [inputValue, sessionId, API_URL, addUserMessage, addBotMessage, handleChatInteraction]);
@@ -457,39 +459,14 @@ const ChatComponent = () => {
 
         // Execute send after DOM updates complete
         requestAnimationFrame(() => {
-          handleSend();
+          handleSend(message);
         });
-      }
-    } else if (e.key === 'Tab') {
-      // Prevent tab from leaving the textarea
-      e.preventDefault();
-
-      // Insert a tab character (4 spaces is common)
-      if (textareaRef.current) {
-        const start = textareaRef.current.selectionStart;
-        const end = textareaRef.current.selectionEnd;
-        const spaces = '    ';
-
-        // Insert spaces at cursor position
-        const newValue = textareaRef.current.value.substring(0, start) +
-                        spaces +
-                        textareaRef.current.value.substring(end);
-
-        // Update value directly
-        textareaRef.current.value = newValue;
-
-        // Set cursor position after the inserted tab
-        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + spaces.length;
-
-        // Trigger resize and update state
-        autoResizeTextarea();
-        debouncedInputHandler(newValue);
       }
     } else {
       // Always handle chat interaction for other keys
       handleChatInteraction();
     }
-  }, [handleSend, handleChatInteraction, autoResizeTextarea, debouncedInputHandler]);
+  }, [handleSend, handleChatInteraction]);
 
   // Reset conversation
   const resetConversation = useCallback(() => {
@@ -653,7 +630,8 @@ const ChatComponent = () => {
             defaultValue={inputValue} // Use defaultValue instead of value for better performance
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message here..."
+            placeholder="Ask about my work"
+            aria-label="Message Hauba"
             rows="1"
             autoComplete="off"
             disabled={isThinking}

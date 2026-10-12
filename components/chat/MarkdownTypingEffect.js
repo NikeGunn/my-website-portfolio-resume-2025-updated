@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import remarkBreaks from 'remark-breaks';
 
@@ -22,7 +21,7 @@ const MarkdownTypingEffect = ({ text, speed = 1, className = '', onComplete = ()
 
   // Memoize markdown plugins to prevent unnecessary re-creation
   const remarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
-  const rehypePlugins = useMemo(() => [rehypeRaw, rehypeHighlight], []);
+  const rehypePlugins = useMemo(() => [rehypeHighlight], []);
 
   // Random typing speed variations with optimization
   const getRandomTypingDelay = useCallback(() => {

@@ -1,33 +1,37 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Source_Serif_4, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 import ScrollToTopWrapper from "../components/ScrollToTopWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const serif = Source_Serif_4({
+  variable: "--font-serif",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const grotesk = Schibsted_Grotesk({
+  variable: "--font-grotesk",
   subsets: ["latin"],
 });
 
 export const metadata = {
-  title: "Nikhil Bhagat",
-  description: "Full-Stack Developer | AI/ML/DL & Gen AI Enthusiast | Innovator",
+  title: "Nikhil Bhagat | AI/ML Engineer & NLP Researcher",
+  description:
+    "AI/ML engineer and independent NLP researcher in Nepal. LLM agents, retrieval-augmented generation, evaluation benchmarks and guardrails for low-resource languages.",
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F3F5F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1828" },
+  ],
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-b from-gray-900 to-black`}>
-        {/* ScrollToTopWrapper component to ensure page starts at the top */}
+      <body className={`${serif.variable} ${grotesk.variable} antialiased`}>
         <ScrollToTopWrapper />
-
-        {/* Main Content */}
-        <main>
-          {children} {/* This renders the page content dynamically */}
-        </main>
+        {children}
       </body>
     </html>
   );
